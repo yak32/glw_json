@@ -39,6 +39,7 @@ This library is in the public domain. You can do what you want, but I would appr
 
 ### Performance
 JSON loading - allocation-free parsing, N Log(N) performance where N is number of lines.
+
 JSON saving - linear perfomance, std::ofstream is used to save data
 
 
