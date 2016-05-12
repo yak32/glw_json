@@ -2,7 +2,7 @@
 Single-file public domain compact json parser for C/C++.
 330 lines of code
 
-# Example
+### Example
 ```c++
 #include "glw_json.h"
 
@@ -29,15 +29,15 @@ int main(){
 To avoid hash maps, values should be serialized in alphabetical order. 
 With Sublime Text 2/3 - select everithing inside serialize() and press F9 - it will sort it automatically.
 
-# FAQ
+## FAQ
 
 The license?
 This library is in the public domain. You can do what you want, but I would appreciate attribution. 
 
-# Dependencies
+### Dependencies
  STL, c-runtime.
 
-# Performance
+### Performance
 JSON loading - allocation-free parsing, N Log(N) performance where N is number of lines.
 JSON saving - linear perfomance, std::ofstream is used to save data
 
