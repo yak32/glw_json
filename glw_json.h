@@ -324,7 +324,7 @@ struct SaveObject{
 template <typename T> bool save_object_to_file(const char* filename, T& t) {
 	try {
 		std::ofstream out(filename);
-		json::save(out, t, 0);
+		if (!json::save(out, t, 0)) return false;
 		out << "\n";
 	}
 	catch (std::exception& e) {
