@@ -1,5 +1,5 @@
 // glw_json.h - v0.1 - json parser for C/C++ - public domain
-// Iakov Sumygin, Feb 2016
+// Iakov Sumygin, May 2016
 
 #ifndef _GLW_JSON_
 #define _GLW_JSON_
