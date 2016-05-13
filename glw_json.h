@@ -207,7 +207,7 @@ template <typename V> const char* load(const char* in, size_t len, V& t) {
 }
 // overrides for embedded objects and pointers to object
 template <typename V> bool load(const char* obj_start, size_t len, V*& value) {
-	if (!value) value = GLW_NEW V;
+	if (!value) value = new V;
 	return serialize(obj_start, len, *value);
 }
 struct LoadObject {
