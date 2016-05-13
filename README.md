@@ -4,7 +4,7 @@ Single-file public domain compact json parser for C/C++.
 
 ### Example
 ```c++
-#include "glw_json.h"
+#include "../glw_json.h"
 
 struct vec3{
   float x,y,z;
@@ -12,16 +12,17 @@ struct vec3{
 
 template<typename T>
 bool serialize(T& t, vec3& v){
-	SERIALIZE(x);
-	SERIALIZE(y);
-	SERIALIZE(z);
-	return true;
+	bool b = true;
+	b &= SERIALIZE(x);
+	b &= SERIALIZE(y);
+	b &= SERIALIZE(z);
+	return b;
 }
 
 int main(){
 	vec3 v;
 	json::load_object_from_file("test.json", v);
-	json::save_object_to_file("test2.json", t);
+	json::save_object_to_file("test2.json", v);
 	return 1;
 }
 ```
