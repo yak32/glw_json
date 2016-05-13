@@ -1,9 +1,10 @@
 # glw_json
-Single-file public domain compact json parser for C/C++
+Single-file public domain compact json parser for C/C++.
+~340 lines of code
 
-# Example
+### Example
 ```c++
-#include "glw_json.h"
+#include "../glw_json.h"
 
 struct vec3{
   float x,y,z;
@@ -11,33 +12,36 @@ struct vec3{
 
 template<typename T>
 bool serialize(T& t, vec3& v){
-	SERIALIZE(x);
-	SERIALIZE(y);
-	SERIALIZE(z);
-	return true;
+	bool b = true;
+	b &= SERIALIZE(x);
+	b &= SERIALIZE(y);
+	b &= SERIALIZE(z);
+	return b;
 }
 
 int main(){
 	vec3 v;
 	json::load_object_from_file("test.json", v);
-	json::save_object_to_file("test2.json", t);
+	json::save_object_to_file("test2.json", v);
 	return 1;
-}'''
+}
+```
 
 To avoid hash maps, values should be serialized in alphabetical order. 
-With Sublime Text 2/3 - select everithing inside serialize() and press F9 - it will sort it automatically.
+With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort it automatically.
 
-# FAQ
+## FAQ
 
 The license?
 This library is in the public domain. You can do what you want, but I would appreciate attribution. 
 
-# Dependencies
+### Dependencies
  STL, c-runtime.
 
-# Performance
+### Performance
 JSON loading - allocation-free parsing, N Log(N) performance where N is number of lines.
-JSON saving - linear perfomance, std::ofstream is used to save data
+
+JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
 
 
 
