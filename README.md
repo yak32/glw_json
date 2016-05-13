@@ -12,11 +12,10 @@ struct vec3{
 
 template<typename T>
 bool serialize(T& t, vec3& v){
-	bool b = true;
-	b &= SERIALIZE(x);
-	b &= SERIALIZE(y);
-	b &= SERIALIZE(z);
-	return b;
+	SERIALIZE(x);
+	SERIALIZE(y);
+	SERIALIZE(z);
+	return true;
 }
 
 int main(){
