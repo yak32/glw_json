@@ -1,5 +1,5 @@
 # glw_json
-Single-file public domain compact json parser for C/C++.
+Single-file public domain compact json serialization for C/C++.
 ~340 lines of code
 
 ### Example
