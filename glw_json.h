@@ -139,7 +139,7 @@ const char* load(const char* str, size_t len, std::basic_string<c, t, a> & v){
 inline const char* load(const char* str, size_t len, float& v){
 	char* pEnd;
 	v = strtof(str, &pEnd);
-	return str+len;
+	return pEnd == str+len? str + len: str;
 }
 inline const char* load(const char* str, size_t len, bool& v){
 	if (len == 4 && !strncmp(str, "true", len)) v = true;
