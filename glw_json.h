@@ -1,23 +1,19 @@
-//*************************************************************************
-//
-// File:        json.h
-// Purpose:		json serialization
-//
-// Copyright (c) 2016 by Yakov I. Sumygin. All Rights Reserved.
-//
-//*************************************************************************
+// glw_json.h - v0.1 - json parser for C/C++ - public domain
+// Iakov Sumygin, Feb 2016
 
-#pragma once
+#ifndef _GLW_JSON_
+#define _GLW_JSON_
 
 
 #include <fstream>
 #include <iterator>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 // maximum count of properties per any JSON object
 #define MAX_JSON_PROPS 300
-
+#define SERIALIZE(prop) t.process(#prop, v.prop)
 
 namespace json{
 
@@ -143,7 +139,7 @@ const char* load(const char* str, size_t len, std::basic_string<c, t, a> & v){
 inline const char* load(const char* str, size_t len, float& v){
 	char* pEnd;
 	v = strtof(str, &pEnd);
-	return v == HUGE_VALF ? str: pEnd;
+	return str+len;
 }
 inline const char* load(const char* str, size_t len, bool& v){
 	if (len == 4 && !strncmp(str, "true", len)) v = true;
@@ -243,12 +239,20 @@ struct LoadObject {
 
 template <typename T>
 bool load_object_from_file(const char* filename, T& t){
-	size_t size;
-	glw::buffer_ptr_t memory_file = IArchiveCore::get()->load_file(filename, IModuleAllocator::get(), true, &size);
-	if (!memory_file) return false;
-	const char* pos = load(memory_file.get(), size, t);
-	if  (pos != memory_file.get()+size){
-		LOG_ERROR("%s:(%d): parsing of json file is failed", filename, get_error_line(memory_file.get(), pos));
+	std::ifstream is (filename, std::ios::binary);
+ 	if (!is)
+ 		return false;
+
+	is.seekg (0, is.end);
+	int length = (int)is.tellg();
+	is.seekg (0, is.beg);
+	char* buffer = new char [length+1];
+	is.read(buffer, length); buffer[length] = 0;
+	is.close();
+	const char* pos = load(buffer, length+1, t);
+	delete[] buffer;
+	if (pos != buffer + length){
+		printf("");
 		return false;
 	}
 	return true;
@@ -317,17 +321,18 @@ struct SaveObject{
 	}
 };
 // serialize single object
-template <typename T> bool save_object(const char* filename, T& t) {
+template <typename T> bool save_object_to_file(const char* filename, T& t) {
 	try {
 		std::ofstream out(filename);
 		json::save(out, t, 0);
 		out << "\n";
 	}
 	catch (std::exception& e) {
-		LOG_ERROR("saving json (%s) failed, error: %s", filename, e.what());
+		printf("saving json (%s) failed, error: %s", filename, e.what());
 		return false;
 	}
 	return true;
 }
 
 }
+#endif // _GLW_JSON_
