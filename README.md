@@ -1,6 +1,6 @@
 # glw_json
 Single-file public domain compact json serialization for C/C++.
-~340 lines of code
+~380 lines of code
 
 ### Example
 ```c++
@@ -26,13 +26,13 @@ int main(){
 }
 ```
 
-To avoid hash maps, values should be serialized in alphabetical order. 
+To avoid hash maps with allocations, values should be serialized in alphabetical order.
 With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort it automatically.
 
 ## FAQ
 
 The license?
-This library is in the public domain. You can do what you want, but I would appreciate attribution. 
+This library is in the public domain. You can do what you want, but I would appreciate attribution.
 
 ### Dependencies
  STL, c-runtime.
@@ -41,6 +41,12 @@ This library is in the public domain. You can do what you want, but I would appr
 JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in an JSON object.
 
 JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
+
+### Tests
+ Download googletests from https://github.com/google/googletest/tree/master/googletest, install near glw_json. Run cmake on CMakeLists.txt in tests folder.
+
+### Compartibility
+ Currently tested with Visual Studio 2013.
 
 
 

@@ -41,7 +41,7 @@ inline const char* search_ws(const char* in) {
 }
 // end of property
 inline const char* search_eop(const char* in) {
-	while (*in && *in != ',' && *in != '}' && !isspace(*in)) in++;
+	while (*in && *in != ',' && *in != '}' && *in != ']' && !isspace(*in)) in++;
 	return in;
 }
 inline const char* search_eov(const char* in) {
@@ -73,6 +73,10 @@ inline size_t get_value_len(const char* in) {
 	return (*in == quote ? find_ch(in + 1, quote) + 1 : search_eop(in)) - in;
 }
 inline const char* load_props(const char* in, prop_map& props, size_t& props_size) {
+	in = skip_ws(in);
+	if (*in == '}')
+		return in; // special case - empty json
+
 	props_size = 0;
 	while (*in) {
 		in = skip_ws(in);
@@ -141,6 +145,7 @@ inline const char* load(const char* str, size_t len, unsigned int& v) {
 }
 template <typename c, typename t, typename a>
 const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v) {
+	if (len < 2) return str; // it's not a string
 	v.assign(str + 1, len - 2);
 	return str + len;
 }
@@ -188,6 +193,7 @@ const char* load_container(const char* in, size_t len, containter_type& t) {
 			return in - 1;
 		in += len;
 		it = v;
+		in = skip_ws(in);
 		if (*in != ',') {
 			if (*in != ']')
 				return in - 1;
@@ -215,7 +221,7 @@ template <typename V> const char* load(const char* in, size_t len, V& t) {
 	std::sort(props, props + props_size, compare_props);
 
 	LoadObject serializer(props, props_size, start);
-	if (!serialize(serializer, t))
+	if (!serialize<LoadObject>(serializer, t))
 		return serializer.error_pos;
 
 	in = skip_ws(in + 1);
@@ -274,7 +280,15 @@ template <typename T> bool load_object_from_file(const char* filename, T& t) {
 	}
 	return true;
 }
-
+template <typename T> bool load_object_from_string(const char* json_string, T& t) {
+	size_t len = strlen(json_string);
+	const char* pos = load(json_string, len + 1, t);
+	if (pos != json_string + len) {
+		printf("");
+		return false;
+	}
+	return true;
+}
 // **************************************** saving JSON ***********************************
 
 inline void save(std::ostream& out, int& t, int tabs) {
@@ -284,7 +298,7 @@ inline void save(std::ostream& out, unsigned int& t, int tabs) {
 	out << t;
 }
 inline void save(std::ostream& out, bool& t, int tabs) {
-	out << t ? "true" : "false";
+	out << (t ? "true" : "false");
 }
 inline void save(std::ostream& out, float& t, int tabs) {
 	out << t;
@@ -317,7 +331,7 @@ template <typename T> bool save(std::ostream& out, T& t, int tabs) {
 	out << "\n";
 	for (int i = 0; i < tabs; ++i) out << '\t';
 	out << '}';
-	return out.fail();
+	return !out.fail();
 }
 struct SaveObject {
 	std::ostream& out;
@@ -337,13 +351,18 @@ struct SaveObject {
 		return true;
 	}
 };
+template <typename T> bool save_object_to_stream(T& t, std::ostream& out) {
+	if (!json::save(out, t, 0))
+		return false;
+	out << "\n";
+	return true;
+}
 // serialize single object
 template <typename T> bool save_object_to_file(const char* filename, T& t) {
 	try {
 		std::ofstream out(filename);
-		if (!json::save(out, t, 0))
+		if (!json::save_object_to_stream(t, out))
 			return false;
-		out << "\n";
 	}
 	catch (std::exception& e) {
 		printf("saving json (%s) failed, error: %s", filename, e.what());
