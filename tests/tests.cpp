@@ -130,12 +130,28 @@ TEST(OneVar, LoadStructWithOneBoolVariable){
 	EXPECT_TRUE(json::load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == false);
 }
+TEST(OneVar, LoadStructWithOneBoolVariable_true){
+	one_bool_var v;
+	const char* json_str = "{\n"
+		"\t\"val\": true\n"
+		"}\n";
+	EXPECT_TRUE(json::load_object_from_string(json_str, v));
+	EXPECT_TRUE(v.val == true);
+}
 TEST(OneVar, SaveStructWithOneBoolVariable){
 	stringstream ss;
 	one_bool_var v; v.val = true;
 	EXPECT_TRUE(json::save_object_to_stream(v, ss));
 	EXPECT_TRUE(ss.str() == "{\n"
 		"\t\"val\": true\n"
+		"}\n");
+}
+TEST(OneVar, SaveStructWithOneBoolVariable_false){
+	stringstream ss;
+	one_bool_var v; v.val = false;
+	EXPECT_TRUE(json::save_object_to_stream(v, ss));
+	EXPECT_TRUE(ss.str() == "{\n"
+		"\t\"val\": false\n"
 		"}\n");
 }
 TEST(OneVar, LoadStructWithOneBoolVariable_Bool){
