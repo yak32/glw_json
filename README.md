@@ -38,7 +38,7 @@ This library is in the public domain. You can do what you want, but I would appr
  STL, c-runtime.
 
 ### Performance
-JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in an JSON object.
+JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in JSON object.
 
 JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
 
