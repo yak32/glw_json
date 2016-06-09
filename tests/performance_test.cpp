@@ -16,7 +16,7 @@
 using namespace std;
 using namespace json;
 
-#define ITERATION 100000
+#define ITERATION 10000
 
 struct InitParam {
 	string configGlossary_installationAt;
@@ -251,7 +251,7 @@ bool glw_json_benchmark(const std::string& jsonString) {
 }
 
 int main() {
-	std::ifstream ifs("data.json", std::ifstream::in);
+	std::ifstream ifs("E:\\projects\\glw_json\\tests\\data.json", std::ifstream::in);
 	std::string   buff = "";
 
 	if (ifs.is_open()) {
