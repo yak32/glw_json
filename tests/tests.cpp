@@ -14,27 +14,27 @@ template <typename T> bool serialize(T& t, empty& e) {
 
 TEST(EmptyObject, LoadEmptyJSON) {
 	const char* json_str = "{}";
-	empty		e;
+	empty e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoBreaks) {
 	const char* json_str = "{\n\n}";
-	empty		e;
+	empty e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoTabs) {
 	const char* json_str = "{		}";
-	empty		e;
+	empty e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoTabsTwoBreaksAtTheEnd) {
 	const char* json_str = "{		}\n\n";
-	empty		e;
+	empty e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, SaveEmptyJSON) {
 	stringstream ss;
-	empty		 e;
+	empty e;
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(e, ss));
 	EXPECT_TRUE(ss.str() == "{\n\n}\n");
 }
@@ -56,7 +56,7 @@ TEST(OneVar, LoadStructWithOneIntVariable) {
 }
 TEST(OneVar, SaveStructWithOneIntVariable) {
 	stringstream ss;
-	one_int_var  v;
+	one_int_var v;
 	v.val = 1;
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
 	EXPECT_TRUE(ss.str() == "{\n"
@@ -87,14 +87,14 @@ template <typename T> bool serialize(T& t, one_float_var& v) {
 
 TEST(OneVar, LoadStructWithOneFloatVariable) {
 	one_float_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1.1\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == 1.1f);
 }
 TEST(OneVar, SaveStructWithOneFloatVariable) {
-	stringstream  ss;
+	stringstream ss;
 	one_float_var v;
 	v.val = 1.1f;
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
@@ -104,14 +104,14 @@ TEST(OneVar, SaveStructWithOneFloatVariable) {
 }
 TEST(OneVar, LoadStructWithOneFloatVariable_Bool) {
 	one_float_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": false\n"
 						   "}\n";
 	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneFloatVariable_FloatWithSpace) {
 	one_float_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1.1	5\n"
 						   "}\n";
 	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
@@ -126,7 +126,7 @@ template <typename T> bool serialize(T& t, one_bool_var& v) {
 
 TEST(OneVar, LoadStructWithOneBoolVariable) {
 	one_bool_var v;
-	const char*  json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": false\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
@@ -134,7 +134,7 @@ TEST(OneVar, LoadStructWithOneBoolVariable) {
 }
 TEST(OneVar, LoadStructWithOneBoolVariable_true) {
 	one_bool_var v;
-	const char*  json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": true\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
@@ -160,14 +160,14 @@ TEST(OneVar, SaveStructWithOneBoolVariable_false) {
 }
 TEST(OneVar, LoadStructWithOneBoolVariable_Bool) {
 	one_bool_var v;
-	const char*  json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1.1\n"
 						   "}\n";
 	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneBoolVariable_BoolWithSpace) {
 	one_bool_var v;
-	const char*  json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": false	5\n"
 						   "}\n";
 	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
@@ -182,14 +182,14 @@ template <typename T> bool serialize(T& t, one_string_var& v) {
 
 TEST(OneVar, LoadStructWithOneStringVariable) {
 	one_string_var v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": \"Simple string\"\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == "Simple string");
 }
 TEST(OneVar, SaveStructWithOneStringVariable) {
-	stringstream   ss;
+	stringstream ss;
 	one_string_var v;
 	v.val = "Simple string";
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
@@ -199,21 +199,21 @@ TEST(OneVar, SaveStructWithOneStringVariable) {
 }
 TEST(OneVar, LoadStructWithOneStringVariable_Int) {
 	one_string_var v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneStringVariable_StringWithSpace) {
 	one_string_var v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": \"Simple string\"	5\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneStringVariable_StringBraces) {
 	one_string_var v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": \"Simple {} string\"\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
@@ -221,7 +221,7 @@ TEST(OneVar, LoadStructWithOneStringVariable_StringBraces) {
 }
 TEST(OneVar, LoadStructWithOneStringVariable_NoClosingQuote) {
 	one_string_var v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": \"Simple string\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
@@ -238,14 +238,14 @@ template <typename T> bool serialize(T& t, array_int_var& v) {
 
 TEST(ArrayVar, LoadStructWithArrayIntVariable) {
 	array_int_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1 , 2 , 3]\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == std::vector<int>({1, 2, 3}));
 }
 TEST(ArrayVar, SaveStructWithArrayIntVariable) {
-	stringstream  ss;
+	stringstream ss;
 	array_int_var v;
 	v.val = {1, 2, 3};
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
@@ -255,28 +255,28 @@ TEST(ArrayVar, SaveStructWithArrayIntVariable) {
 }
 TEST(ArrayVar, LoadStructWithArrayIntVariable_Float) {
 	array_int_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1.0\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayIntVariable_FloatArray) {
 	array_int_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1.1, 2.2, 3.3]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayIntVariable_IntWithSpace) {
 	array_int_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1	2]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayIntVariable_WithBraces) {
 	array_int_var v;
-	const char*   json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1{}, 2}]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
@@ -293,14 +293,14 @@ template <typename T> bool serialize(T& t, array_float_var& v) {
 
 TEST(ArrayVar, LoadStructWithArrayFloatVariable) {
 	array_float_var v;
-	const char*		json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1.1 , 2.2 , 3.3]\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == std::vector<float>({1.1f, 2.2f, 3.3f}));
 }
 TEST(ArrayVar, SaveStructWithArrayFloatVariable) {
-	stringstream	ss;
+	stringstream ss;
 	array_float_var v;
 	v.val = {1.1f, 2.2f, 3.3f};
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
@@ -310,28 +310,28 @@ TEST(ArrayVar, SaveStructWithArrayFloatVariable) {
 }
 TEST(ArrayVar, LoadStructWithArrayFloatVariable_String) {
 	array_float_var v;
-	const char*		json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": \"wrong value\"\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayFloatVariable_StringArray) {
 	array_float_var v;
-	const char*		json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [\"wrong value\", \"wrong value\", \"wrong value\"]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayFloatVariable_IntWithSpace) {
 	array_float_var v;
-	const char*		json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1	2]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayFloatVariable_WithBraces) {
 	array_float_var v;
-	const char*		json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1{}, 2}]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
@@ -348,14 +348,14 @@ template <typename T> bool serialize(T& t, array_string_var& v) {
 
 TEST(ArrayVar, LoadStructWithArrayStringVariable) {
 	array_string_var v;
-	const char*		 json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [\"str1\" ,\"str2\", \"str3\"]\n"
 						   "}\n";
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
 	EXPECT_TRUE(v.val == std::vector<string>({"str1", "str2", "str3"}));
 }
 TEST(ArrayVar, SaveStructWithArrayStringVariable) {
-	stringstream	 ss;
+	stringstream ss;
 	array_string_var v;
 	v.val = {"str1", "str2", "str3"};
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
@@ -365,28 +365,28 @@ TEST(ArrayVar, SaveStructWithArrayStringVariable) {
 }
 TEST(ArrayVar, LoadStructWithArrayStringVariable_Int) {
 	array_string_var v;
-	const char*		 json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": 1\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayStringVariable_IntArray) {
 	array_string_var v;
-	const char*		 json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [1, 2, 3]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayStringVariable_IntWithSpace) {
 	array_string_var v;
-	const char*		 json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [\"str1\"	2]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
 }
 TEST(ArrayVar, LoadStructWithArrayStringVariable_WithBraces) {
 	array_string_var v;
-	const char*		 json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val\": [\"str1\"{}, \"str2\"}]\n"
 						   "}\n";
 	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
@@ -395,13 +395,13 @@ TEST(ArrayVar, LoadStructWithArrayStringVariable_WithBraces) {
 //******************* embedded object
 
 struct obj_var1 {
-	int   val1;
+	int val1;
 	float val2;
 };
 
 struct obj_var2 {
-	int		 val1;
-	float	val2;
+	int val1;
+	float val2;
 	obj_var1 val3;
 };
 
@@ -419,7 +419,7 @@ template <typename T> bool serialize(T& t, obj_var2& v) {
 	return b;
 }
 TEST(ObjectInObject, LoadObjectInObject) {
-	obj_var2	v;
+	obj_var2 v;
 	const char* json_str = "{\n"
 						   "	\"val1\": 1,\n"
 						   "	\"val2\": 1.1,\n"
@@ -436,7 +436,7 @@ TEST(ObjectInObject, LoadObjectInObject) {
 }
 TEST(ObjectInObject, SaveObjectInObject) {
 	stringstream ss;
-	obj_var2	 v;
+	obj_var2 v;
 	v.val1 = 1;
 	v.val2 = 1.1f;
 	v.val3.val1 = 1;
@@ -455,13 +455,13 @@ TEST(ObjectInObject, SaveObjectInObject) {
 //*******************  object array
 
 struct obj_array_var1 {
-	int   val1;
+	int val1;
 	float val2;
 };
 
 struct obj_array_var2 {
-	int					   val1;
-	float				   val2;
+	int val1;
+	float val2;
 	vector<obj_array_var1> val3;
 };
 
@@ -480,7 +480,7 @@ template <typename T> bool serialize(T& t, obj_array_var2& v) {
 }
 TEST(ObjectArrayInObject, LoadObjectArrayInObject) {
 	obj_array_var2 v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val1\": 1,\n"
 						   "	\"val2\": 1.1,\n"
 						   "	\"val3\": [{\n"
@@ -496,7 +496,7 @@ TEST(ObjectArrayInObject, LoadObjectArrayInObject) {
 	EXPECT_TRUE(v.val3[0].val2 == 1.1f);
 }
 TEST(ObjectArrayInObject, SaveObjectArrayInObject) {
-	stringstream   ss;
+	stringstream ss;
 	obj_array_var2 v;
 	v.val1 = 1;
 	v.val2 = 1.1f;
@@ -515,7 +515,7 @@ TEST(ObjectArrayInObject, SaveObjectArrayInObject) {
 }
 TEST(ObjectArrayInObject, LoadObjectArray2InObject) {
 	obj_array_var2 v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val1\": 1,\n"
 						   "	\"val2\": 1.1,\n"
 						   "	\"val3\": [{\n"
@@ -536,7 +536,7 @@ TEST(ObjectArrayInObject, LoadObjectArray2InObject) {
 	EXPECT_TRUE(v.val3[1].val2 == 2.2f);
 }
 TEST(ObjectArrayInObject, SaveObjectArray2InObject) {
-	stringstream   ss;
+	stringstream ss;
 	obj_array_var2 v;
 	v.val1 = 1;
 	v.val2 = 1.1f;
@@ -561,7 +561,7 @@ TEST(ObjectArrayInObject, SaveObjectArray2InObject) {
 
 TEST(ObjectArrayInObject, LoadObjectArray2InObjectNoComma) {
 	obj_array_var2 v;
-	const char*	json_str = "{\n"
+	const char* json_str = "{\n"
 						   "	\"val1\": 1,\n"
 						   "	\"val2\": 1.1,\n"
 						   "	\"val3\": [{\n"
