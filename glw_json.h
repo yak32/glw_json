@@ -28,7 +28,7 @@ enum JSON_OPTIONS {
 // struct to hold refs to name-values pairs from json file
 struct string_ref {
 	const char* str;
-	size_t		len;
+	size_t len;
 };
 struct property {
 	string_ref param, value;
@@ -138,7 +138,7 @@ inline bool compare_props(const property& p1, const property& p2) {
 	return p1.param < p2.param;
 }
 inline const char* load(const char* str, size_t len, int& v, int options) {
-	char*	pEnd;
+	char* pEnd;
 	long int l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtol(str, &pEnd, 16);
@@ -146,7 +146,7 @@ inline const char* load(const char* str, size_t len, int& v, int options) {
 	return l <= LONG_MIN || l >= LONG_MAX ? str : pEnd;
 }
 inline const char* load(const char* str, size_t len, unsigned int& v, int options) {
-	char*	pEnd;
+	char* pEnd;
 	long int l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtoul(str, &pEnd, 16);
@@ -198,7 +198,7 @@ const char* load_container(const char* in, size_t len, containter_type& t, int o
 		return in - 1;
 
 	std::insert_iterator<containter_type> it(t, t.end());
-	typename containter_type::value_type  v;
+	typename containter_type::value_type v;
 	do {
 		in = skip_ws(in + 1);
 		size_t len = get_value_len(in);
@@ -227,12 +227,12 @@ struct LoadObject {
 	LoadObject(const prop_map& _props, size_t _props_size, const char* _start, int _options)
 		: props(_props), props_size(_props_size), current(0), options(_options), error_pos(nullptr),
 		  start(_start) {}
-	const prop_map&			   props;
-	size_t					   props_size;
-	size_t					   current;
-	int						   options;
-	const char*				   error_pos;
-	const char*				   start;
+	const prop_map& props;
+	size_t props_size;
+	size_t current;
+	int options;
+	const char* error_pos;
+	const char* start;
 	template <typename V> bool process(const char* name, V& value) {
 		if (current < props_size &&
 			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
@@ -255,8 +255,8 @@ struct LoadObject {
 };
 template <typename V> const char* load(const char* in, size_t len, V& t, int options) {
 	const char* start = in;
-	prop_map	props;
-	size_t		props_size = 0;
+	prop_map props;
+	size_t props_size = 0;
 	in = skip_ws(in);
 
 	if (*in != '{')
@@ -347,8 +347,8 @@ template <typename T, typename A> bool save(std::ostream& out, std::vector<T, A>
 }
 struct SaveObject {
 	std::ostream& out;
-	bool		  first;
-	int			  tabs;
+	bool first;
+	int tabs;
 	SaveObject(std::ostream& _out, int _tabs = 1) : out(_out), first(true), tabs(_tabs) {}
 	template <typename T> bool process(const char* name, T& t) {
 		if (first)
