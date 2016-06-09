@@ -20,7 +20,7 @@ const char quote = '\"';
 
 const int JSON_OK = 0;
 const int JSON_FAIL = -1;
-enum JSON_OPTIONS{
+enum JSON_OPTIONS {
 	RESET_IF_ABSENT = 1, // if property is absent, reset variable to 0
 	ERROR_IF_ABSENT = 2  // if property is absent, return error
 };
@@ -73,10 +73,10 @@ inline const char* find_ch(const char* in, char ch) {
 	return in;
 }
 inline size_t get_value_len(const char* in) {
-	if (*in == '{'){
+	if (*in == '{') {
 		// special case - for object as value, value len includes whitespace after the object
 		const char* brace = search_obj_end(in + 1, '{', '}'); // embedded object
-		return skip_ws(brace)-in;
+		return skip_ws(brace) - in;
 	}
 	if (*in == '[')
 		return search_obj_end(in + 1, '[', ']') - in; // embedded array
@@ -155,7 +155,8 @@ inline const char* load(const char* str, size_t len, unsigned int& v, int option
 }
 template <typename c, typename t, typename a>
 const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v, int options) {
-	if (len < 2) return str; // it's not a string
+	if (len < 2)
+		return str; // it's not a string
 	v.assign(str + 1, len - 2);
 	return str + len;
 }
@@ -183,19 +184,21 @@ inline int get_error_line(const char* in, const char* pos) {
 	}
 	return lines + 1;
 }
-template <typename T, typename A>
-const char* load(const char* in, size_t len, std::vector<T, A>& t, int options) {
-	return load_container(in, len, t, options);
-}
+template <typename V> const char* load(const char* in, size_t len, V& t, int options);
 
+// overrides for embedded objects and pointers to object
+template <typename V> bool load(const char* obj_start, size_t len, V*& value, int options) {
+	if (!value)
+		value = new V;
+	return serialize(obj_start, len, *value, options);
+}
 template <typename containter_type>
 const char* load_container(const char* in, size_t len, containter_type& t, int options) {
-	const char* start = in;
 	if (*in != '[')
 		return in - 1;
 
 	std::insert_iterator<containter_type> it(t, t.end());
-	containter_type::value_type			  v;
+	typename containter_type::value_type  v;
 	do {
 		in = skip_ws(in + 1);
 		size_t len = get_value_len(in);
@@ -216,50 +219,25 @@ const char* load_container(const char* in, size_t len, containter_type& t, int o
 	} while (true);
 	return in; // success
 }
-template <typename V> const char* load(const char* in, size_t len, V& t, int options) {
-	const char* start = in;
-	prop_map	props;
-	size_t		props_size = 0;
-	in = skip_ws(in);
-
-	if (*in != '{')
-		return in - 1;							// error
-	in = load_props(in + 1, props, props_size); // load prop map for child object
-	if (*in != '}')
-		return in - 1; // error
-
-	std::sort(props, props + props_size, compare_props);
-
-	LoadObject serializer(props, props_size, start, options);
-	if (!serialize<LoadObject>(serializer, t))
-		return serializer.error_pos;
-
-	if (serializer.current < serializer.props_size)
-		return props[serializer.current].param.str;
-
-	in = skip_ws(in + 1); // skip whitespace after 
-	return in;
-}
-// overrides for embedded objects and pointers to object
-template <typename V> bool load(const char* obj_start, size_t len, V*& value, int options) {
-	if (!value)
-		value = new V;
-	return serialize(obj_start, len, *value, options);
+template <typename T, typename A>
+const char* load(const char* in, size_t len, std::vector<T, A>& t, int options) {
+	return load_container(in, len, t, options);
 }
 struct LoadObject {
 	LoadObject(const prop_map& _props, size_t _props_size, const char* _start, int _options)
-		: props(_props), props_size(_props_size), current(0), start(_start),
-		error_pos(nullptr), options(_options){}
-	const prop_map&	props;
-	size_t			props_size;
-	size_t			current;
-	int				options;
-	const char*		error_pos;
-	const char*		start;
+		: props(_props), props_size(_props_size), current(0), options(_options), error_pos(nullptr),
+		  start(_start) {}
+	const prop_map&			   props;
+	size_t					   props_size;
+	size_t					   current;
+	int						   options;
+	const char*				   error_pos;
+	const char*				   start;
 	template <typename V> bool process(const char* name, V& value) {
 		if (current < props_size &&
 			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
-			const char* end = load(props[current].value.str, props[current].value.len, value, options);
+			const char* end =
+				load(props[current].value.str, props[current].value.len, value, options);
 			if (end == props[current].value.str + props[current].value.len) {
 				++current;
 				return true;
@@ -275,8 +253,32 @@ struct LoadObject {
 		return false;
 	}
 };
+template <typename V> const char* load(const char* in, size_t len, V& t, int options) {
+	const char* start = in;
+	prop_map	props;
+	size_t		props_size = 0;
+	in = skip_ws(in);
 
-template <typename T> int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
+	if (*in != '{')
+		return in - 1;							// error
+	in = load_props(in + 1, props, props_size); // load prop map for child object
+	if (*in != '}')
+		return in - 1; // error
+
+	std::sort(props, props + props_size, compare_props);
+
+	LoadObject serializer(props, props_size, start, options);
+	if (!serialize(serializer, t))
+		return serializer.error_pos;
+
+	if (serializer.current < serializer.props_size)
+		return props[serializer.current].param.str;
+
+	in = skip_ws(in + 1); // skip whitespace after
+	return in;
+}
+template <typename T>
+int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
 	std::ifstream is(filename, std::ios::binary);
 	if (!is)
 		return false;
@@ -295,8 +297,10 @@ template <typename T> int load_object_from_file(const char* filename, T& t, int 
 	}
 	return JSON_OK;
 }
-template <typename T> int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)-1, int options = RESET_IF_ABSENT) {
-	if (len==(size_t)-1)
+template <typename T>
+int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)-1,
+							int options = RESET_IF_ABSENT) {
+	if (len == (size_t)-1)
 		len = strlen(json_string);
 	const char* pos = load(json_string, len + 1, t, options);
 	if (pos != json_string + len) {
@@ -325,6 +329,8 @@ template <typename c, typename tr, typename a>
 void save(std::ostream& out, std::basic_string<c, tr, a>& t, int tabs) {
 	out << quote << t << quote;
 }
+
+template <typename T> bool save(std::ostream& out, T& t, int tabs);
 template <typename iterator>
 bool save_container(std::ostream& out, iterator begin, iterator end, int tabs) {
 	out << '[';
@@ -338,15 +344,6 @@ bool save_container(std::ostream& out, iterator begin, iterator end, int tabs) {
 }
 template <typename T, typename A> bool save(std::ostream& out, std::vector<T, A>& t, int tabs) {
 	return save_container(out, t.begin(), t.end(), tabs);
-}
-template <typename T> bool save(std::ostream& out, T& t, int tabs) {
-	out << "{\n";
-	SaveObject serializer(out, tabs + 1);
-	serialize<SaveObject>(serializer, t); // serialize should be defined for type T
-	out << "\n";
-	for (int i = 0; i < tabs; ++i) out << '\t';
-	out << '}';
-	return !out.fail();
 }
 struct SaveObject {
 	std::ostream& out;
@@ -366,6 +363,15 @@ struct SaveObject {
 		return true;
 	}
 };
+template <typename T> bool save(std::ostream& out, T& t, int tabs) {
+	out << "{\n";
+	SaveObject serializer(out, tabs + 1);
+	serialize(serializer, t); // serialize should be defined for type T
+	out << "\n";
+	for (int i = 0; i < tabs; ++i) out << '\t';
+	out << '}';
+	return !out.fail();
+}
 template <typename T> int save_object_to_stream(T& t, std::ostream& out) {
 	if (!json::save(out, t, 0))
 		return JSON_FAIL;
@@ -380,7 +386,7 @@ template <typename T> int save_object_to_file(const char* filename, T& t) {
 			return JSON_FAIL;
 	}
 	catch (std::exception& e) {
-		//printf("saving json (%s) failed, error: %s", filename, e.what());
+		// printf("saving json (%s) failed, error: %s", filename, e.what());
 		return JSON_FAIL;
 	}
 	return JSON_OK;

@@ -39,6 +39,7 @@ This library is in the public domain. You can do what you want, but I would appr
 
 ### Performance
 JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in JSON object.
+   Parsing speed is comparable to RapidJSON, saving is slower.
 
 JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
 
@@ -46,7 +47,7 @@ JSON saving - linear performance, std::ofstream is used to save data ( some allo
  Download googletests from https://github.com/google/googletest/tree/master/googletest, install near glw_json. Run cmake on CMakeLists.txt in tests folder.
 
 ### Compartibility
- Currently tested with Visual Studio 2013.
+  Tested with Visual Studio 2013 and Clang on Mac OS X.
 
 
 
