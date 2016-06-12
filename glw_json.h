@@ -9,11 +9,14 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <limits.h>
+#include <string.h>
+#include <cmath>
 
 // maximum count of properties per any JSON object
 #define MAX_JSON_PROPS 300
 #define SERIALIZE(prop) t.process(#prop, v.prop)
-
+#define GLW_UNUSED(x) (void)x
 namespace json {
 
 const char quote = '\"';
@@ -82,7 +85,8 @@ inline size_t get_value_len(const char* in) {
 		return search_obj_end(in + 1, '[', ']') - in; // embedded array
 	return (*in == quote ? find_ch(in + 1, quote) + 1 : search_eop(in)) - in;
 }
-inline const char* load_props(const char* in, prop_map& props, size_t& props_size) {
+inline const char* load_props(const char* in, const char* end, prop_map& props,
+							  size_t& props_size) {
 	in = skip_ws(in);
 	if (*in == '}')
 		return in; // special case - empty json
@@ -107,7 +111,11 @@ inline const char* load_props(const char* in, prop_map& props, size_t& props_siz
 		in = skip_ws(in + 1);
 		p.value.str = in;
 		p.value.len = get_value_len(in);
-		in = skip_ws(in + p.value.len);
+		in += p.value.len;
+		if (in >= end)
+			return end - 1; // error - value is not closed properly
+
+		in = skip_ws(in);
 
 		// register name-value pair
 		if (props_size >= MAX_JSON_PROPS - 1)
@@ -138,34 +146,40 @@ inline bool compare_props(const property& p1, const property& p2) {
 	return p1.param < p2.param;
 }
 inline const char* load(const char* str, size_t len, int& v, int options) {
+	GLW_UNUSED(options);
 	char* pEnd;
 	long int l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtol(str, &pEnd, 16);
 	v = (int)l;
-	return l <= LONG_MIN || l >= LONG_MAX ? str : pEnd;
+	return (pEnd < str + len) || (l <= INT_MIN || l >= INT_MAX) ? str : pEnd;
 }
 inline const char* load(const char* str, size_t len, unsigned int& v, int options) {
+	GLW_UNUSED(options);
 	char* pEnd;
-	long int l = strtol(str, &pEnd, 10);
-	if (pEnd < str + len)
-		l = strtoul(str, &pEnd, 16);
+	unsigned long l = strtoul(str, &pEnd, 10);
 	v = (unsigned int)l;
-	return l >= ULONG_MAX ? str : pEnd;
+	return l < INT_MAX && pEnd == str + len ? pEnd : str;
 }
 template <typename c, typename t, typename a>
 const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v, int options) {
+	GLW_UNUSED(options);
 	if (len < 2)
 		return str; // it's not a string
 	v.assign(str + 1, len - 2);
 	return str + len;
 }
 inline const char* load(const char* str, size_t len, float& v, int options) {
+	GLW_UNUSED(options);
 	char* pEnd;
 	v = strtof(str, &pEnd);
-	return pEnd == str + len ? str + len : str;
+	if (v == HUGE_VAL || v == -HUGE_VAL)
+		return str;
+
+	return pEnd < str + len ? str : str + len;
 }
 inline const char* load(const char* str, size_t len, bool& v, int options) {
+	GLW_UNUSED(options);
 	if (len == 4 && !strncmp(str, "true", len))
 		v = true;
 	else if (len == 5 && !strncmp(str, "false", len))
@@ -194,6 +208,7 @@ template <typename V> bool load(const char* obj_start, size_t len, V*& value, in
 }
 template <typename containter_type>
 const char* load_container(const char* in, size_t len, containter_type& t, int options) {
+	GLW_UNUSED(len);
 	if (*in != '[')
 		return in - 1;
 
@@ -225,7 +240,7 @@ const char* load(const char* in, size_t len, std::vector<T, A>& t, int options) 
 }
 struct LoadObject {
 	LoadObject(const prop_map& _props, size_t _props_size, const char* _start, int _options)
-		: props(_props), props_size(_props_size), current(0), options(_options), error_pos(nullptr),
+		: props(_props), props_size(_props_size), current(0), options(_options), error_pos(NULL),
 		  start(_start) {}
 	const prop_map& props;
 	size_t props_size;
@@ -260,8 +275,8 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 	in = skip_ws(in);
 
 	if (*in != '{')
-		return in - 1;							// error
-	in = load_props(in + 1, props, props_size); // load prop map for child object
+		return in - 1;										 // error
+	in = load_props(in + 1, start + len, props, props_size); // load prop map for child object
 	if (*in != '}')
 		return in - 1; // error
 
@@ -311,22 +326,28 @@ int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)
 // **************************************** saving JSON ***********************************
 
 inline void save(std::ostream& out, int& t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << t;
 }
 inline void save(std::ostream& out, unsigned int& t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << t;
 }
 inline void save(std::ostream& out, bool& t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << (t ? "true" : "false");
 }
 inline void save(std::ostream& out, float& t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << t;
 }
 inline void save(std::ostream& out, const char* t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << quote << t << quote;
 }
 template <typename c, typename tr, typename a>
 void save(std::ostream& out, std::basic_string<c, tr, a>& t, int tabs) {
+	GLW_UNUSED(tabs);
 	out << quote << t << quote;
 }
 

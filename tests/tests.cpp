@@ -7,34 +7,34 @@
 using namespace std;
 using namespace json;
 
-struct empty {};
-template <typename T> bool serialize(T& t, empty& e) {
+struct empty_obj {};
+template <typename T> bool serialize(T& t, empty_obj& e) {
 	return true;
 }
 
 TEST(EmptyObject, LoadEmptyJSON) {
 	const char* json_str = "{}";
-	empty e;
+	empty_obj e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoBreaks) {
 	const char* json_str = "{\n\n}";
-	empty e;
+	empty_obj e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoTabs) {
 	const char* json_str = "{		}";
-	empty e;
+	empty_obj e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, LoadEmptyJSONTwoTabsTwoBreaksAtTheEnd) {
 	const char* json_str = "{		}\n\n";
-	empty e;
+	empty_obj e;
 	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, e));
 }
 TEST(EmptyObject, SaveEmptyJSON) {
 	stringstream ss;
-	empty e;
+	empty_obj e;
 	EXPECT_TRUE(JSON_OK == save_object_to_stream(e, ss));
 	EXPECT_TRUE(ss.str() == "{\n\n}\n");
 }
@@ -62,6 +62,50 @@ TEST(OneVar, SaveStructWithOneIntVariable) {
 	EXPECT_TRUE(ss.str() == "{\n"
 							"	\"val\": 1\n"
 							"}\n");
+}
+struct one_uint_var {
+	unsigned int val;
+};
+template <typename T> bool serialize(T& t, one_uint_var& v) {
+	return SERIALIZE(val);
+}
+TEST(OneVar, LoadStructWithOneUIntVariable) {
+	one_uint_var v;
+	const char* json_str = "{\n"
+						   "	\"val\": 1\n"
+						   "}\n";
+	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
+	EXPECT_TRUE(v.val == 1);
+}
+TEST(OneVar, SaveStructWithOneUIntVariable) {
+	stringstream ss;
+	one_uint_var v;
+	v.val = 1;
+	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
+	EXPECT_TRUE(ss.str() == "{\n"
+							"	\"val\": 1\n"
+							"}\n");
+}
+TEST(OneVar, LoadStructWithOneHugeIntVariable) {
+	one_int_var v;
+	const char* json_str = "{\n"
+						   "	\"val\": 12345678901234567890\n"
+						   "}\n";
+	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
+}
+TEST(OneVar, LoadStructWithOneHugeUIntVariable) {
+	one_uint_var v;
+	const char* json_str = "{\n"
+						   "	\"val\": 12345678901234567890\n"
+						   "}\n";
+	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
+}
+TEST(OneVar, LoadStructWithOneNegativeUIntVariable) {
+	one_uint_var v;
+	const char* json_str = "{\n"
+						   "	\"val\": -1\n"
+						   "}\n";
+	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneIntVariable_Float) {
 	one_int_var v;
@@ -101,6 +145,13 @@ TEST(OneVar, SaveStructWithOneFloatVariable) {
 	EXPECT_TRUE(ss.str() == "{\n"
 							"	\"val\": 1.1\n"
 							"}\n");
+}
+TEST(OneVar, LoadStructWithOneHugeFloatVariable_Bool) {
+	one_float_var v;
+	const char* json_str = "{\n"
+						   "	\"val\": 1.18973e+4932\n"
+						   "}\n";
+	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
 }
 TEST(OneVar, LoadStructWithOneFloatVariable_Bool) {
 	one_float_var v;
@@ -224,7 +275,7 @@ TEST(OneVar, LoadStructWithOneStringVariable_NoClosingQuote) {
 	const char* json_str = "{\n"
 						   "	\"val\": \"Simple string\n"
 						   "}\n";
-	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
+	EXPECT_TRUE(3 == load_object_from_string(json_str, v));
 }
 
 // ************************** arrays **************************************
@@ -488,12 +539,15 @@ TEST(ObjectArrayInObject, LoadObjectArrayInObject) {
 						   "		\"val2\": 1.1\n"
 						   "	}]\n"
 						   "}\n";
-	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
-	EXPECT_TRUE(v.val1 == 1);
-	EXPECT_TRUE(v.val2 == 1.1f);
-	EXPECT_TRUE(v.val3.size() == 1);
-	EXPECT_TRUE(v.val3[0].val1 == 1);
-	EXPECT_TRUE(v.val3[0].val2 == 1.1f);
+	int r = load_object_from_string(json_str, v);
+	EXPECT_TRUE(JSON_OK == r);
+	if (r == JSON_OK) {
+		EXPECT_TRUE(v.val1 == 1);
+		EXPECT_TRUE(v.val2 == 1.1f);
+		EXPECT_TRUE(v.val3.size() == 1);
+		EXPECT_TRUE(v.val3[0].val1 == 1);
+		EXPECT_TRUE(v.val3[0].val2 == 1.1f);
+	}
 }
 TEST(ObjectArrayInObject, SaveObjectArrayInObject) {
 	stringstream ss;
