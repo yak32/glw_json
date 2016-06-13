@@ -413,4 +413,5 @@ template <typename T> int save_object_to_file(const char* filename, T& t) {
 	return JSON_OK;
 }
 }
+
 #endif // _GLW_JSON_
