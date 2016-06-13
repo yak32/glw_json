@@ -46,7 +46,7 @@ JSON loading - allocation-free parsing, N Log(N) performance where N is number o
 JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
 
 ### Tests
- Download googletests from https://github.com/google/googletest/tree/master/googletest, install near glw_json. Run cmake on CMakeLists.txt in tests folder. Tests require C++11 support to compile (glw_json.h doesn't).
+ Run cmake on CMakeLists.txt in tests folder. Tests require C++11 support to compile (glw_json.h doesn't).
 
 ### Compartibility
   Tested with Visual Studio 2013, 2015, GCC 4.3.6 to GCC 7.0 (HEAD), Clang 3.0 to 3.9.0 (trunc), compartible with C++98, C++11 and C++14.
