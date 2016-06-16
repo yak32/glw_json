@@ -12,6 +12,8 @@
 #include <limits.h>
 #include <string.h>
 #include <cmath>
+#include <assert.h>
+
 
 // maximum count of properties per any JSON object
 #define MAX_JSON_PROPS 300
@@ -241,14 +243,22 @@ const char* load(const char* in, size_t len, std::vector<T, A>& t, int options) 
 struct LoadObject {
 	LoadObject(const prop_map& _props, size_t _props_size, const char* _start, int _options)
 		: props(_props), props_size(_props_size), current(0), options(_options), error_pos(NULL),
-		  start(_start) {}
+		  start(_start), _prev_name("") {}
 	const prop_map& props;
 	size_t props_size;
 	size_t current;
 	int options;
 	const char* error_pos;
 	const char* start;
+	const char* _prev_name;
 	template <typename V> bool process(const char* name, V& value) {
+#ifndef NDEBUG
+		// this check could fail if name is dynamically allocated and was freed after usage
+		// if Sublime Text 3 is used, select everything inside serialize() and press F9
+		if (strcmp(_prev_name, name) >= 0)
+			assert(false && "variables should be serialized in alphabetical order");
+		_prev_name = name;
+#endif
 		if (current < props_size &&
 			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
 			const char* end =

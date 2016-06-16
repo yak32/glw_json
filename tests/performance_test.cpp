@@ -251,7 +251,7 @@ bool glw_json_benchmark(const std::string& jsonString) {
 }
 
 int main() {
-	std::ifstream ifs("C:\\projects\\glw_json\\tests\\data.json", std::ifstream::in);
+	std::ifstream ifs("E:\\projects\\glw_json\\tests\\data.json", std::ifstream::in);
 	std::string   buff = "";
 
 	if (ifs.is_open()) {
