@@ -1,9 +1,13 @@
 # glw_json
-Single-file public domain compact json serialization for C/C++.
+Single-file public domain compact and fast json serialization for C++ with no-alloc parsing.
 
 ### Example
 ```c++
-#include "../glw_json.h"
+#include "glw_json.h"
+#include <sstream>
+
+using namespace json;
+using namespace std;
 
 struct vec3{
   float x,y,z;
@@ -17,12 +21,68 @@ bool serialize(T& t, vec3& v){
 	return true;
 }
 
+struct array_int_var {
+	std::vector<int> val;
+};
+template <typename T> bool serialize(T& t, array_int_var& v) {
+	return SERIALIZE(val);
+}
+
+struct obj_array_var1 {
+	int val1;
+	float val2;
+};
+
+struct obj_array_var2 {
+	int val1;
+	float val2;
+	vector<obj_array_var1> val3;
+};
+
+template <typename T> bool serialize(T& t, obj_array_var1& v) {
+	bool b = true;
+	b &= SERIALIZE(val1);
+	b &= SERIALIZE(val2);
+	return b;
+}
+template <typename T> bool serialize(T& t, obj_array_var2& v) {
+	bool b = true;
+	b &= SERIALIZE(val1);
+	b &= SERIALIZE(val2);
+	b &= SERIALIZE(val3);
+	return b;
+}
+
 int main(){
 	vec3 v;
-	if (json::load_object_from_file("test.json", v) != json::JSON_OK)
+
+	// simple objects
+	if (json::load_object_from_file("test.json", v) != JSON_OK)
 		return 0;
-	if (json::save_object_to_file("test2.json", v) != json::JSON_OK)
+
+	if (json::save_object_to_file("test2.json", v) != JSON_OK)
 		return 0;
+
+	// array
+	stringstream ss;
+	array_int_var av;
+	av.val = {1, 2, 3};
+
+	if (save_object_to_stream(av, ss) != JSON_OK )
+		printf("failed");
+
+	// array of objects
+	stringstream sss;
+	obj_array_var2 oav;
+	oav.val1 = 1;
+	oav.val2 = 1.1f;
+	oav.val3.resize(1);
+	oav.val3[0].val1 = 1;
+	oav.val3[0].val2 = 1.1f;
+
+	if (JSON_OK != save_object_to_stream(oav, sss))
+		printf("failed");
+
 	return 1;
 }
 ```
