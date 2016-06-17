@@ -6,7 +6,6 @@ Single-file public domain compact and fast json serialization for C++ with no-al
 #include "glw_json.h"
 
 using namespace json;
-using namespace std;
 
 struct vec3{
   float x,y,z;
@@ -24,10 +23,10 @@ int main(){
 	vec3 v;
 
 	// simple objects
-	if (json::load_object_from_file("test.json", v) != JSON_OK)
+	if (load_object_from_file("test.json", v) != JSON_OK)
 		return 0;
 
-	if (json::save_object_to_file("test2.json", v) != JSON_OK)
+	if (save_object_to_file("test2.json", v) != JSON_OK)
 		return 0;
 
 	return 1;
@@ -114,10 +113,10 @@ int main(){
 	vec3 v;
 
 	// simple objects
-	if (json::load_object_from_file("test.json", v) != JSON_OK)
+	if (load_object_from_file("test.json", v) != JSON_OK)
 		return 0;
 
-	if (json::save_object_to_file("test2.json", v) != JSON_OK)
+	if (save_object_to_file("test2.json", v) != JSON_OK)
 		return 0;
 
 	// array
