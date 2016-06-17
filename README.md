@@ -20,9 +20,8 @@ bool serialize(T& t, vec3& v){
 }
 
 int main(){
-	vec3 v;
 
-	// simple objects
+	vec3 v;
 	if (load_object_from_file("test.json", v) != JSON_OK)
 		return 0;
 
@@ -65,18 +64,6 @@ JSON saving - linear performance, std::ofstream is used to save data ( some allo
 using namespace json;
 using namespace std;
 
-struct vec3{
-  float x,y,z;
-};
-
-template<typename T>
-bool serialize(T& t, vec3& v){
-	SERIALIZE(x);
-	SERIALIZE(y);
-	SERIALIZE(z);
-	return true;
-}
-
 struct array_int_var {
 	std::vector<int> val;
 };
@@ -111,13 +98,6 @@ template <typename T> bool serialize(T& t, obj_array_var2& v) {
 
 int main(){
 	vec3 v;
-
-	// simple objects
-	if (load_object_from_file("test.json", v) != JSON_OK)
-		return 0;
-
-	if (save_object_to_file("test2.json", v) != JSON_OK)
-		return 0;
 
 	// array
 	stringstream ss;
