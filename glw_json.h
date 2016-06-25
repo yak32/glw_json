@@ -14,11 +14,13 @@
 #include <cmath>
 #include <assert.h>
 
-
 // maximum count of properties per any JSON object
 #define MAX_JSON_PROPS 300
 #define SERIALIZE(prop) t.process(#prop, v.prop)
 #define GLW_UNUSED(x) (void)x
+#ifndef LOG_ERROR
+	#define LOG_ERROR(...)
+#endif
 namespace json {
 
 const char quote = '\"';
@@ -203,10 +205,9 @@ inline int get_error_line(const char* in, const char* pos) {
 template <typename V> const char* load(const char* in, size_t len, V& t, int options);
 
 // overrides for embedded objects and pointers to object
-template <typename V> bool load(const char* obj_start, size_t len, V*& value, int options) {
-	if (!value)
-		value = new V;
-	return serialize(obj_start, len, *value, options);
+template <typename V> const char* load(const char* obj_start, size_t len, V*& value, int options) {
+	value = new V;
+	return load(obj_start, len, *value, options);
 }
 template <typename containter_type>
 const char* load_container(const char* in, size_t len, containter_type& t, int options) {
@@ -362,6 +363,9 @@ void save(std::ostream& out, std::basic_string<c, tr, a>& t, int tabs) {
 }
 
 template <typename T> bool save(std::ostream& out, T& t, int tabs);
+template <typename T> bool save(std::ostream& out, T*& t, int tabs){
+	return save(out, *t, tabs);
+}
 template <typename iterator>
 bool save_container(std::ostream& out, iterator begin, iterator end, int tabs) {
 	out << '[';
@@ -417,7 +421,8 @@ template <typename T> int save_object_to_file(const char* filename, T& t) {
 			return JSON_FAIL;
 	}
 	catch (std::exception& e) {
-		// printf("saving json (%s) failed, error: %s", filename, e.what());
+		GLW_UNUSED(e);
+		LOG_ERROR("saving json (%s) failed, error: %s", filename, e.what());
 		return JSON_FAIL;
 	}
 	return JSON_OK;

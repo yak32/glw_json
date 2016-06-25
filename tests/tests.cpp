@@ -628,3 +628,172 @@ TEST(ObjectArrayInObject, LoadObjectArray2InObjectNoComma) {
 						   "}\n";
 	EXPECT_TRUE(load_object_from_string(json_str, v) == 7); // 7 - error line
 }
+
+
+//******************* embedded object (pointers)
+
+struct pointer_obj_var2 {
+	int val1;
+	float val2;
+	obj_var1* val3;
+};
+template <typename T> bool serialize(T& t, pointer_obj_var2& v) {
+	bool b = true;
+	b &= SERIALIZE(val1);
+	b &= SERIALIZE(val2);
+	b &= SERIALIZE(val3);
+	return b;
+}
+TEST(ObjectPointerInObject, LoadObjectInObject) {
+	pointer_obj_var2 v;
+	const char* json_str = "{\n"
+						   "	\"val1\": 1,\n"
+						   "	\"val2\": 1.1,\n"
+						   "	\"val3\": {\n"
+						   "		\"val1\": 1,\n"
+						   "		\"val2\": 1.1\n"
+						   "	}\n"
+						   "}\n";
+	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
+	EXPECT_TRUE(v.val1 == 1);
+	EXPECT_TRUE(v.val2 == 1.1f);
+	EXPECT_TRUE(v.val3->val1 == 1);
+	EXPECT_TRUE(v.val3->val2 == 1.1f);
+}
+TEST(ObjectPointerInObject, SaveObjectInObject) {
+	stringstream ss;
+	pointer_obj_var2 v;
+	v.val1 = 1;
+	v.val2 = 1.1f;
+	v.val3 = new obj_var1;
+	v.val3->val1 = 1;
+	v.val3->val2 = 1.1f;
+	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
+	EXPECT_TRUE(ss.str() == "{\n"
+							"	\"val1\": 1,\n"
+							"	\"val2\": 1.1,\n"
+							"	\"val3\": {\n"
+							"		\"val1\": 1,\n"
+							"		\"val2\": 1.1\n"
+							"	}\n"
+							"}\n");
+}
+
+//*******************  object array of pointers
+
+struct pointer_obj_array_var2 {
+	int val1;
+	float val2;
+	vector<obj_array_var1*> val3;
+};
+
+template <typename T> bool serialize(T& t, pointer_obj_array_var2& v) {
+	bool b = true;
+	b &= SERIALIZE(val1);
+	b &= SERIALIZE(val2);
+	b &= SERIALIZE(val3);
+	return b;
+}
+TEST(ObjectPointerArrayInObject, LoadObjectArrayInObject) {
+	pointer_obj_array_var2 v;
+	const char* json_str = "{\n"
+						   "	\"val1\": 1,\n"
+						   "	\"val2\": 1.1,\n"
+						   "	\"val3\": [{\n"
+						   "		\"val1\": 1,\n"
+						   "		\"val2\": 1.1\n"
+						   "	}]\n"
+						   "}\n";
+	int r = load_object_from_string(json_str, v);
+	EXPECT_TRUE(JSON_OK == r);
+	if (r == JSON_OK) {
+		EXPECT_TRUE(v.val1 == 1);
+		EXPECT_TRUE(v.val2 == 1.1f);
+		EXPECT_TRUE(v.val3.size() == 1);
+		EXPECT_TRUE(v.val3[0]->val1 == 1);
+		EXPECT_TRUE(v.val3[0]->val2 == 1.1f);
+	}
+}
+TEST(ObjectPointerArrayInObject, SaveObjectArrayInObject) {
+	stringstream ss;
+	pointer_obj_array_var2 v;
+	v.val1 = 1;
+	v.val2 = 1.1f;
+	v.val3.resize(1);
+	v.val3[0] = new obj_array_var1;
+	v.val3[0]->val1 = 1;
+	v.val3[0]->val2 = 1.1f;
+	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
+	EXPECT_TRUE(ss.str() == "{\n"
+							"	\"val1\": 1,\n"
+							"	\"val2\": 1.1,\n"
+							"	\"val3\": [{\n"
+							"			\"val1\": 1,\n"
+							"			\"val2\": 1.1\n"
+							"		}]\n"
+							"}\n");
+}
+TEST(ObjectPointerArrayInObject, LoadObjectArray2InObject) {
+	pointer_obj_array_var2 v;
+	const char* json_str = "{\n"
+						   "	\"val1\": 1,\n"
+						   "	\"val2\": 1.1,\n"
+						   "	\"val3\": [{\n"
+						   "		\"val1\": 1,\n"
+						   "		\"val2\": 1.1\n"
+						   "	},{\n"
+						   "		\"val1\": 2,\n"
+						   "		\"val2\": 2.2\n"
+						   "	}]\n"
+						   "}\n";
+	EXPECT_TRUE(JSON_OK == load_object_from_string(json_str, v));
+	EXPECT_TRUE(v.val1 == 1);
+	EXPECT_TRUE(v.val2 == 1.1f);
+	EXPECT_TRUE(v.val3.size() == 2);
+	EXPECT_TRUE(v.val3[0]->val1 == 1);
+	EXPECT_TRUE(v.val3[0]->val2 == 1.1f);
+	EXPECT_TRUE(v.val3[1]->val1 == 2);
+	EXPECT_TRUE(v.val3[1]->val2 == 2.2f);
+}
+TEST(ObjectPointerArrayInObject, SaveObjectArray2InObject) {
+	stringstream ss;
+	pointer_obj_array_var2 v;
+	v.val1 = 1;
+	v.val2 = 1.1f;
+	v.val3.resize(2);
+	v.val3[0] = new obj_array_var1;
+	v.val3[1] = new obj_array_var1;
+	v.val3[0]->val1 = 1;
+	v.val3[0]->val2 = 1.1f;
+	v.val3[1]->val1 = 2;
+	v.val3[1]->val2 = 2.2f;
+	EXPECT_TRUE(JSON_OK == save_object_to_stream(v, ss));
+	EXPECT_TRUE(ss.str() == "{\n"
+							"	\"val1\": 1,\n"
+							"	\"val2\": 1.1,\n"
+							"	\"val3\": [{\n"
+							"			\"val1\": 1,\n"
+							"			\"val2\": 1.1\n"
+							"		},{\n"
+							"			\"val1\": 2,\n"
+							"			\"val2\": 2.2\n"
+							"		}]\n"
+							"}\n");
+}
+
+TEST(ObjectPointerArrayInObject, LoadObjectArray2InObjectNoComma) {
+	pointer_obj_array_var2 v;
+	const char* json_str = "{\n"
+						   "	\"val1\": 1,\n"
+						   "	\"val2\": 1.1,\n"
+						   "	\"val3\": [{\n"
+						   "		\"val1\": 1,\n"
+						   "		\"val2\": 1.1\n"
+						   "	} {\n"
+						   "		\"val1\": 2,\n"
+						   "		\"val2\": 2.2\n"
+						   "	}]\n"
+						   "}\n";
+	EXPECT_TRUE(load_object_from_string(json_str, v) == 7); // 7 - error line
+}
+

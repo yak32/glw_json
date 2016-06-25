@@ -36,6 +36,7 @@ To avoid hash maps with allocations, values should be serialized in alphabetical
 BTW, realization with hash map was 2x times slower (for avarage sized json object with around 50 properties)
 With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
 
+
 ## FAQ
 
 The license?
@@ -82,6 +83,12 @@ struct obj_array_var2 {
 	vector<obj_array_var1> val3;
 };
 
+struct object_pointer_in_object {
+	int val1;
+	float val2;
+	obj_array_var1* val3;
+};
+
 template <typename T> bool serialize(T& t, obj_array_var1& v) {
 	bool b = true;
 	b &= SERIALIZE(val1);
@@ -89,6 +96,14 @@ template <typename T> bool serialize(T& t, obj_array_var1& v) {
 	return b;
 }
 template <typename T> bool serialize(T& t, obj_array_var2& v) {
+	bool b = true;
+	b &= SERIALIZE(val1);
+	b &= SERIALIZE(val2);
+	b &= SERIALIZE(val3);
+	return b;
+}
+
+template <typename T> bool serialize(T& t, object_pointer_in_object& v) {
 	bool b = true;
 	b &= SERIALIZE(val1);
 	b &= SERIALIZE(val2);
@@ -117,6 +132,10 @@ int main(){
 	oav.val3[0].val2 = 1.1f;
 
 	if (JSON_OK != save_object_to_stream(oav, sss))
+		printf("failed");
+
+	object_pointer_in_object obj_in_obj;
+	if (JSON_OK != load_object_from_file("object in object test", obj_in_obj))
 		printf("failed");
 
 	return 1;
