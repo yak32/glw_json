@@ -8,6 +8,6 @@ if(UNIX)
 endif()
 
 ADD_EXECUTABLE (tests tests.cpp )
-ADD_EXECUTABLE (performance_test performance_test.cpp )
+#ADD_EXECUTABLE (performance_test performance_test.cpp )
 
 
