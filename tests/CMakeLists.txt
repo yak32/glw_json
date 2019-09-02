@@ -5,11 +5,15 @@ ADD_SUBDIRECTORY(gtests)
 INCLUDE_DIRECTORIES(${GTEST_SRC_DIRS})
 INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
 
-IF(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x")
+ADD_EXECUTABLE (tests tests.cpp )
+
+IF(UNIX)	
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x ")
+	SET(THREADS_PREFER_PTHREAD_FLAG ON)
+	FIND_PACKAGE(Threads REQUIRED)
+	TARGET_LINK_LIBRARIES(tests Threads::Threads)
 ENDIF()
 
-ADD_EXECUTABLE (tests tests.cpp )
 ADD_EXECUTABLE (performance_test performance_test.cpp )
 ADD_TEST(test1 tests)
 ADD_DEPENDENCIES(tests googletest)
