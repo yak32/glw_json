@@ -2,7 +2,7 @@
 #include "src/gtest-all.cc"
 #include "src/gtest_main.cc"
 
-#include <sstream>
+#include <sstream>      // std::numeric_limits
 
 using namespace std;
 using namespace json;

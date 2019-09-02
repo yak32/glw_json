@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5 FATAL_ERROR)
 PROJECT(glw_json)
 ADD_SUBDIRECTORY(gtests)
 
@@ -12,5 +12,6 @@ ENDIF()
 ADD_EXECUTABLE (tests tests.cpp )
 ADD_EXECUTABLE (performance_test performance_test.cpp )
 ADD_TEST(test1 tests)
+ADD_DEPENDENCIES(tests googletest)
 
 

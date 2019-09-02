@@ -1,6 +1,20 @@
 # glw_json
 Single-file public domain compact and fast json serialization for C++ with no-alloc parsing.
 
+# License
+Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify usage.
+
+### How to build and run tests (Linux or MacOS)
+```
+git clone https://github.com/yak32/glw_json.git
+cd glw_json
+mkdir build
+cd build
+cmake ..
+cmake --build .
+./tests/tests
+```
+
 ### Example
 ```c++
 #include "glw_json.h"

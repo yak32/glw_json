@@ -11,7 +11,7 @@
 #include <time.h>
 #include <sstream>
 
-#include "Windows.h" // QueryPerformanceCounter
+#include <chrono>  // for high_resolution_clock
 
 using namespace std;
 using namespace json;
@@ -209,17 +209,11 @@ template <typename T> bool serialize(T& t, Test& v) {
 
 bool glw_json_benchmark(const std::string& jsonString) {
 
+	using namespace std::chrono;
 	std::cout << std::setw(25) << "glw_json";
 
 	// Parsing the string
-	LARGE_INTEGER freq;
-	QueryPerformanceFrequency(&freq);
-	if (!freq.QuadPart)
-		return false;
-
-	LARGE_INTEGER t;
-	::QueryPerformanceCounter(&t);
-	float t1 = (float)t.QuadPart / (float)freq.QuadPart;
+	auto start = high_resolution_clock::now();
 
 	Test test;
 	for (int i = 0; i < ITERATION; i++){
@@ -227,13 +221,15 @@ bool glw_json_benchmark(const std::string& jsonString) {
 		load_object_from_string(jsonString.data(), test);
 	}
 
-	::QueryPerformanceCounter(&t);
-	float t2 = (float)t.QuadPart / (float)freq.QuadPart;
+	auto finish = high_resolution_clock::now();
+	auto elapsed = finish-start;
 
-	printf("time to load, %d iterations: %f sec\n", ITERATION, t2-t1);
+ 	std::cout << "time to load: ";
+ 	std::cout << "iterations" << ITERATION;
+  	std::cout << elapsed.count() * milliseconds::period::num / milliseconds::period::den;
+  	std::cout << " seconds";
 
-	::QueryPerformanceCounter(&t);
-	float t3 = (float)t.QuadPart / (float)freq.QuadPart;
+	start = high_resolution_clock::now();
 
 	// Serialize to string
 	stringstream ss;
@@ -242,10 +238,13 @@ bool glw_json_benchmark(const std::string& jsonString) {
 		save_object_to_stream(test, ss);
 	}
 
-	::QueryPerformanceCounter(&t);
-	float t4 = (float)t.QuadPart / (float)freq.QuadPart;
+	finish = high_resolution_clock::now();
 
-	printf("time to save, %d iterations: %f sec\n", ITERATION, t4-t3);
+	std::cout << "time to save: ";
+ 	std::cout << "iterations" << ITERATION;
+  	std::cout << elapsed.count() * milliseconds::period::num / milliseconds::period::den;
+  	std::cout << " seconds";
+
 	std::cout << std::endl;
 	return true;
 }

@@ -167,7 +167,7 @@ inline const char* load(const char* str, size_t len, unsigned int& v, int option
 	if (pEnd < str + len)
 		l = strtoul(str, &pEnd, 16);
 	v = (unsigned int)l;
-	return errno != ERANGE && pEnd == str + len && str[0] != '-' ? pEnd : str;
+	return errno != ERANGE && l < UINT_MAX && pEnd == str + len && str[0] != '-' ? pEnd : str;
 }
 template <typename c, typename t, typename a>
 const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v, int options) {
