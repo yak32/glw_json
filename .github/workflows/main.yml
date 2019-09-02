@@ -12,6 +12,6 @@ jobs:
     - name: configure
       run: mkdir build; cd build; cmake ..
     - name: build
-      run: cmake --build . --target install
+      run: cd build; cmake --build . --target install
     - name: test
-      run: ./../install/tests
+      run: ./install/tests
