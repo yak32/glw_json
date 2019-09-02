@@ -50,12 +50,6 @@ To avoid hash maps with allocations, values should be serialized in alphabetical
 BTW, realization with hash map was 2x times slower (for avarage sized json object with around 50 properties)
 With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
 
-
-## FAQ
-
-The license?
-This library is in the public domain. You can do what you want, but I would appreciate attribution.
-
 ### Dependencies
  STL, c-runtime.
 
