@@ -1,5 +1,12 @@
 # glw_json
-Single-file cross-platform compact and fast json serialization for C++ with no-allocation parsing.
+Header-only cross-platform \compact and fast json serialization for C++ with no-allocation parsing.
+
+# Usage
+Just drop the header (glw_json.h) into your C++ project and include it into a source file
+
+```C++
+#include "glw_json.h"
+```
 
 # License
 Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify the usage.
@@ -55,10 +62,10 @@ With Sublime Text 2/3: select everything inside serialize() and press F9 - it wi
  STL, c-runtime.
 
 ### Performance
-JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in JSON object.
+JSON loading - allocation-free parsing, N Log(N) performance where N is number of properties in a JSON object.
    Parsing speed is comparable to RapidJSON, saving is slower.
 
-JSON saving - linear performance, std::ofstream is used to save data ( some allocations )
+Saving to JSON  - linear performance, std::ofstream is used to save data ( some allocations )
 
 ### Tests
  Run cmake on CMakeLists.txt in tests folder. Tests require C++11 support to compile (glw_json.h doesn't).
