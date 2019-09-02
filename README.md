@@ -4,7 +4,7 @@ Single-file cross-platform compact and fast json serialization for C++ with no-a
 # License
 Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify the usage.
 
-### How to build and run tests (Linux or MacOS)
+### How to build and run tests 
 ```
 git clone https://github.com/yak32/glw_json.git
 cd glw_json
@@ -14,6 +14,7 @@ cmake ..
 cmake --build . --target install
  ./../install/tests
 ```
+(use Git Bash on Windows)
 
 ### Example
 ```c++
