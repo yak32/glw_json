@@ -3,7 +3,7 @@ name: C/C++ CI
 on: [push]
 
 jobs:
-  build on ubuntu:
+  build_on_ubuntu:
 
     runs-on: ubuntu-latest
     
@@ -16,7 +16,7 @@ jobs:
     - name: test
       run: ./install/tests
       
-  build on windows:
+  build_on_windows:
 
     runs-on: windows-latest
     
@@ -29,7 +29,7 @@ jobs:
     - name: test
       run: ./install/tests
       
-  build on macOS:
+  build_on_macOS:
 
     runs-on: macOS-latest
     
