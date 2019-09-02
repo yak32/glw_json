@@ -13,5 +13,6 @@ ADD_EXECUTABLE (tests tests.cpp )
 ADD_EXECUTABLE (performance_test performance_test.cpp )
 ADD_TEST(test1 tests)
 ADD_DEPENDENCIES(tests googletest)
+INSTALL(TARGETS tests DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
 
 

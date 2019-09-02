@@ -1,8 +1,8 @@
 # glw_json
-Single-file public domain compact and fast json serialization for C++ with no-alloc parsing.
+Single-file cross-platform compact and fast json serialization for C++ with no-allocation parsing.
 
 # License
-Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify usage.
+Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify the usage.
 
 ### How to build and run tests (Linux or MacOS)
 ```
@@ -11,8 +11,8 @@ cd glw_json
 mkdir build
 cd build
 cmake ..
-cmake --build .
-./tests/tests
+cmake --build . --target install
+ ./../install/tests
 ```
 
 ### Example
