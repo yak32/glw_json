@@ -1,4 +1,4 @@
-// glw_json.h - v0.1 - json parser for C/C++ - public domain
+// glw_json.h - v0.1 - json parser for C/C++ BSD Clause 2
 // Iakov Sumygin, May 2016
 
 #ifndef _GLW_JSON_
