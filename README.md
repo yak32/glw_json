@@ -1,5 +1,5 @@
 # glw_json
-Header-only cross-platform \compact and fast json serialization for C++ with no-allocation parsing.
+Header-only, cross-platform and compact json serialization for C++ with no-allocation parsing.
 
 # Usage
 Just drop the header (glw_json.h) into your C++ project and include it into a source file
