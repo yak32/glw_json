@@ -1,4 +1,4 @@
-![](https://github.com/yak32/glw_json/.github/workflows/status/badge.svg)
+![](https://github.com/yak32/glw_json/workflows/status/badge.svg)
 
 # glw_json
 Header-only, cross-platform and compact json serialization for C++ with no-allocation parsing.
