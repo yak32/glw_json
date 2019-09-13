@@ -1,4 +1,4 @@
-name: glw_json_main_workflow
+name: status
 
 on: [push]
 
