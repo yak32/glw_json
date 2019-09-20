@@ -28,6 +28,8 @@ jobs:
       run: cd build; cmake --build . --target install
     - name: test
       run: ./install/tests
+    - name: install lcov
+      run: apt-get install lcov
     - name: generate coverage info
       run: lcov --capture --directory ./  --output-file coverage.info
     - name: coveralls
