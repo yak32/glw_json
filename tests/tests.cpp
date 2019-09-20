@@ -86,41 +86,7 @@ TEST(OneVar, SaveStructWithOneUIntVariable) {
 							"	\"val\": 1\n"
 							"}\n");
 }
-TEST(OneVar, LoadStructWithOneHugeIntVariable) {
-	one_int_var v;
-	const char* json_str = "{\n"
-						   "	\"val\": 12345678901234567890\n"
-						   "}\n";
-	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
-}
-TEST(OneVar, LoadStructWithOneHugeUIntVariable) {
-	one_uint_var v;
-	const char* json_str = "{\n"
-						   "	\"val\": 12345678901234567890\n"
-						   "}\n";
-	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
-}
-TEST(OneVar, LoadStructWithOneNegativeUIntVariable) {
-	one_uint_var v;
-	const char* json_str = "{\n"
-						   "	\"val\": -1\n"
-						   "}\n";
-	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
-}
-TEST(OneVar, LoadStructWithOneIntVariable_Float) {
-	one_int_var v;
-	const char* json_str = "{\n"
-						   "	\"val\": 1.0\n"
-						   "}\n";
-	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
-}
-TEST(OneVar, LoadStructWithOneIntVariable_IntWithSpace) {
-	one_int_var v;
-	const char* json_str = "{\n"
-						   "	\"val\": 1	5\n"
-						   "}\n";
-	EXPECT_TRUE(2 == load_object_from_string(json_str, v));
-}
+
 
 struct one_float_var {
 	float val;
