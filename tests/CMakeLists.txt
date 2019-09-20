@@ -14,6 +14,13 @@ IF(UNIX)
 	TARGET_LINK_LIBRARIES(tests Threads::Threads)
 ENDIF()
 
+IF(NOT WIN32)
+	SET(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG} --coverage")
+	SET(CMAKE_EXE_LINKER_FLAGS_COVERAGE "${CMAKE_EXE_LINKER_FLAGS_DEBUG} --coverage")
+	SET(CMAKE_SHARED_LINKER_FLAGS_COVERAGE "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} --coverage")
+	MESSAGE("Generating coverage!!")
+ENDIF()
+
 ADD_EXECUTABLE (performance_test performance_test.cpp )
 ADD_TEST(test1 tests)
 ADD_DEPENDENCIES(tests googletest)
