@@ -23,11 +23,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: configure
-      run: mkdir build; cd build; cmake ..
+      run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=COVERAGE..
     - name: build
       run: cd build; cmake --build . --target install
     - name: test
-      run: cd ./install; ./tests
+      run: ./install/tests
     - name: install lcov
       run: sudo apt-get install lcov
     - name: generate coverage info
