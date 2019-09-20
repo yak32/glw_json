@@ -27,7 +27,7 @@ jobs:
     - name: build
       run: cd build; cmake --build . --target install
     - name: test
-      run: ./install/tests
+      run: cd ./install; ./tests
     - name: install lcov
       run: sudo apt-get install lcov
     - name: generate coverage info
