@@ -47,9 +47,9 @@ jobs:
     - name: configure
       run: mkdir build && cd build && cmake ..
     - name: build
-      run: cd build && cmake --build . --target install
+      run: cd build; cmake --build . --target install
     - name: test
-      run: cd install && tests.exe
+      run: cd install; tests.exe
       
   build_on_macOS:
 
