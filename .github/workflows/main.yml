@@ -49,7 +49,7 @@ jobs:
     - name: build
       run: cd build; cmake --build . --target install
     - name: test
-      run: cd install; tests.exe
+      run: ./install/tests.exe
       
   build_on_macOS:
 
