@@ -1,5 +1,5 @@
 # glw_json  ![](https://github.com/yak32/glw_json/workflows/status/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/yak32/glw_json/badge.svg)](https://coveralls.io/github/yak32/glw_json)
-Header-only, cross-platform and compact json serialization for C++ with zero allocation parsing.
+Header-only, cross-platform and compact json serialization for C++ with no memory allocations.
 
 # Usage
 Just drop the header (glw_json.h) into your C++ project and include it into a source file
@@ -11,7 +11,7 @@ Just drop the header (glw_json.h) into your C++ project and include it into a so
 # License
 Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify the usage.
 
-### How to build and run tests 
+### How to build and run tests
 ```
 git clone https://github.com/yak32/glw_json.git
 cd glw_json
@@ -55,7 +55,7 @@ int main(){
 ```
 
 To avoid hash maps with allocations, values should be serialized in alphabetical order.
-BTW, realization with hash map was 2x times slower (for avarage sized json object with around 50 properties)
+BTW, initial implementation with hash map was 2x times slower (for average sized json object with around 50 properties)
 With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
 
 ### Dependencies
