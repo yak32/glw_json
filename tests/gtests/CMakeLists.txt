@@ -27,6 +27,10 @@ SET(GTEST_INCLUDE_DIRS
     ${source_dir}/googletest/include
     ${source_dir}/googletest PARENT_SCOPE)
 
+# for google benchmark
+SET(GOOGLETEST_PATH ${source_dir} PARENT_SCOPE)
+
 # Specify MainTest's link libraries
 EXTERNALPROJECT_GET_PROPERTY(googletest binary_dir)
 SET(GTEST_LIBS_DIR ${binary_dir}/googlemock/gtest PARENT_SCOPE)
+

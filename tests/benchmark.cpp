@@ -3,6 +3,7 @@
 // https://github.com/lijoantony/JsonBenchmarkCpp
 
 #include "../glw_json.h"
+#include "benchmark/benchmark.h"
 
 #include <iostream>
 #include <iomanip>
@@ -207,50 +208,10 @@ template <typename T> bool serialize(T& t, Test& v) {
 	return b;
 }
 
-bool glw_json_benchmark(const std::string& jsonString) {
+static void BM_glw_json_load(benchmark::State& state) {
 
-	using namespace std::chrono;
-	std::cout << std::setw(25) << "glw_json";
-
-	// Parsing the string
-	auto start = high_resolution_clock::now();
-
-	Test test;
-	for (int i = 0; i < ITERATION; i++){
-		test.web_app.servlet.clear();
-		load_object_from_string(jsonString.data(), test);
-	}
-
-	auto finish = high_resolution_clock::now();
-	auto elapsed = finish-start;
-
- 	std::cout << "time to load: ";
- 	std::cout << "iterations" << ITERATION;
-  	std::cout << elapsed.count() * milliseconds::period::num / milliseconds::period::den;
-  	std::cout << " seconds";
-
-	start = high_resolution_clock::now();
-
-	// Serialize to string
-	stringstream ss;
-	for (int i = 0; i < ITERATION; i++) {
-		ss.clear();
-		save_object_to_stream(test, ss);
-	}
-
-	finish = high_resolution_clock::now();
-
-	std::cout << "time to save: ";
- 	std::cout << "iterations" << ITERATION;
-  	std::cout << elapsed.count() * milliseconds::period::num / milliseconds::period::den;
-  	std::cout << " seconds";
-
-	std::cout << std::endl;
-	return true;
-}
-
-int main() {
-	std::ifstream ifs("E:\\projects\\glw_json\\tests\\data.json", std::ifstream::in);
+	// Perform setup here
+	std::ifstream ifs("data.json", std::ifstream::in);
 	std::string   buff = "";
 
 	if (ifs.is_open()) {
@@ -265,7 +226,52 @@ int main() {
 		std::cout << "No data available for test, exiting!" << std::endl;
 		exit(1);
 	}
-	glw_json_benchmark(buff);
-	std::getchar();
-	return 0;
+
+	Test test;
+	test.web_app.servlet.clear();
+
+	for (auto _ : state) {
+	    // This code gets timed
+		load_object_from_string(buff.data(), test);
+	}
+
+	//std::getchar();
 }
+
+static void BM_glw_json_save(benchmark::State& state) {
+
+  	// Perform setup here
+	std::ifstream ifs("data.json", std::ifstream::in);
+	std::string   buff = "";
+
+	if (ifs.is_open()) {
+		while (!ifs.eof()) {
+			std::string temp;
+			ifs >> temp;
+			buff += temp;
+		}
+	}
+
+	if (buff.empty()) {
+		std::cout << "No data available for test, exiting!" << std::endl;
+		exit(1);
+	}
+
+	// prepare the test data
+	Test test;
+	test.web_app.servlet.clear();
+	load_object_from_string(buff.data(), test);
+
+	for (auto _ : state) {
+	    // This code gets timed
+		stringstream ss;
+		ss.clear();
+		save_object_to_stream(test, ss);
+	}
+
+	//std::getchar();
+}
+
+BENCHMARK(BM_glw_json_load);
+BENCHMARK(BM_glw_json_save);
+BENCHMARK_MAIN();
