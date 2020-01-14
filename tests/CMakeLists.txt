@@ -22,20 +22,20 @@ IF(NOT WIN32)
 	MESSAGE("Generating coverage!!")
 ENDIF()
 
-ADD_EXECUTABLE (benchmark benchmark.cpp )
-ADD_DEPENDENCIES(benchmark gbenchmark)
-LINK_DIRECTORIES(benchmark PRIVATE ${GBENCHMARK_LIBS_DIR})
-TARGET_LINK_LIBRARIES(benchmark ${GBENCHMARK_LIB})
+LINK_DIRECTORIES(${GBENCHMARK_LIBS_DIR})
+
+ADD_EXECUTABLE (benchmark_test benchmark.cpp )
+ADD_DEPENDENCIES(benchmark_test gbenchmark)
+TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark)
 
 IF(WIN32)
-	TARGET_LINK_LIBRARIES(benchmark Shlwapi.lib)
+	TARGET_LINK_LIBRARIES(benchmark_test Shlwapi.lib)
 ENDIF()
 
 ADD_TEST(test1 tests)
 ADD_DEPENDENCIES(tests googletest)
 INSTALL(TARGETS tests DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
-INSTALL(TARGETS benchmark DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
-INSTALL(TARGETS benchmark DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
+INSTALL(TARGETS benchmark_test DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.json ${CMAKE_CURRENT_SOURCE_DIR}/data.json
 		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
 
