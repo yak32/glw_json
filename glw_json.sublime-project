@@ -1,0 +1,44 @@
+{
+ 	"folders": [
+	 {
+		 "path": "tests",
+		 "folder_exclude_patterns":[
+			"cmake*",
+		 ],
+		 "path": ".",
+	 }
+	],
+ 	"build_systems":[
+	 {
+		"linux":
+		{
+			"file_regex": "^(.*?):([0-9]+):?([0-9]+)?:? .*?[a-z]+:(.*)$"
+		},
+		"osx":
+		{
+			"file_regex": "^(.*?):([0-9]+):?([0-9]+)?:.*error:(.*)$"
+		},
+
+	 	"name": "glw_json",
+		"shell_cmd": "cmake --build . --target install",
+		"file_regex": "^[ .\\\\/]*([a-zA-Z]?:?[\\w.\\\\/]+)[()]([0-9]+)[)]([0-9]+)?:?(.*)$",
+		"working_dir": "${project_path}/build",
+		"selector": "source.c, source.c++",
+		"variants":
+	   	[
+			{
+				"name": "project",
+				"selector": "source.c, source.c++",
+				"shell_cmd": "cmake -B$project_path/build -H$project_path"
+			},
+	        {
+			    "shell_cmd": "./install/tests",
+			    "working_dir": "${project_path}",
+			    "name": "run",
+			    "file_regex": "^[.\\\\/]*([A-Z]?:?[\\w.\\\\/]+)[:]([0-9]+)[:]([0-9]+)?:?(.*)$",
+			    "selector": "source.c, source.c++"
+	   		}
+	  	]
+	}
+	]
+}

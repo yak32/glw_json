@@ -32,5 +32,6 @@ SET(GOOGLETEST_PATH ${source_dir} PARENT_SCOPE)
 
 # Specify MainTest's link libraries
 EXTERNALPROJECT_GET_PROPERTY(googletest binary_dir)
+
 SET(GTEST_LIBS_DIR ${binary_dir}/googlemock/gtest PARENT_SCOPE)
 
