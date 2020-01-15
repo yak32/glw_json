@@ -12,6 +12,12 @@
 #include <time.h>
 #include <sstream>
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include <iostream>
+
+
 #include <chrono>  // for high_resolution_clock
 
 using namespace std;
@@ -208,10 +214,9 @@ template <typename T> bool serialize(T& t, Test& v) {
 	return b;
 }
 
-static void BM_glw_json_load(benchmark::State& state) {
-
+std::string load_json(const char* path){
 	// Perform setup here
-	std::ifstream ifs("data.json", std::ifstream::in);
+	std::ifstream ifs(path, std::ifstream::in);
 	std::string   buff = "";
 
 	if (ifs.is_open()) {
@@ -226,6 +231,12 @@ static void BM_glw_json_load(benchmark::State& state) {
 		std::cout << "No data available for test, exiting!" << std::endl;
 		exit(1);
 	}
+	return buff;
+}
+
+static void BM_glw_json_load(benchmark::State& state) {
+
+	std::string buff = load_json("data.json");
 
 	Test test;
 	test.web_app.servlet.clear();
@@ -241,21 +252,7 @@ static void BM_glw_json_load(benchmark::State& state) {
 static void BM_glw_json_save(benchmark::State& state) {
 
   	// Perform setup here
-	std::ifstream ifs("data.json", std::ifstream::in);
-	std::string   buff = "";
-
-	if (ifs.is_open()) {
-		while (!ifs.eof()) {
-			std::string temp;
-			ifs >> temp;
-			buff += temp;
-		}
-	}
-
-	if (buff.empty()) {
-		std::cout << "No data available for test, exiting!" << std::endl;
-		exit(1);
-	}
+	std::string buff = load_json("data.json");
 
 	// prepare the test data
 	Test test;
@@ -268,10 +265,133 @@ static void BM_glw_json_save(benchmark::State& state) {
 		ss.clear();
 		save_object_to_stream(test, ss);
 	}
-
-	//std::getchar();
 }
 
 BENCHMARK(BM_glw_json_load);
 BENCHMARK(BM_glw_json_save);
+
+using namespace rapidjson;
+
+static void BM_rapid_json_load(benchmark::State& state) {
+    // 1. Parse a JSON string into DOM.
+    std::string json = load_json("data.json");
+    Document d;
+
+	Test test;
+	test.web_app.servlet.clear();
+
+	for (auto _ : state) {
+	    // This code gets timed
+		d.Parse(json.c_str());
+		if (d.HasParseError()){
+			std::cout << "Failed to parse using rapid json, exiting!" << std::endl;
+			exit(1);
+		}
+
+
+		const Value& web_app = d["web-app"];
+		const Value& servlet = web_app["servlet"];
+
+		if (web_app.HasMember("servlet-mapping")){
+			const Value& servletMapping = web_app["servlet-mapping"];
+			if (servletMapping.HasMember("cofaxCDS")) test.web_app.servletMapping.cofaxCDS = servletMapping["cofaxCDS"].GetString();
+			if (servletMapping.HasMember("cofaxEmail")) test.web_app.servletMapping.cofaxEmail = servletMapping["cofaxEmail"].GetString();
+			if (servletMapping.HasMember("cofaxAdmin")) test.web_app.servletMapping.cofaxAdmin = servletMapping["cofaxAdmin"].GetString();
+			if (servletMapping.HasMember("fileServlet")) test.web_app.servletMapping.fileServlet = servletMapping["fileServlet"].GetString();
+			if (servletMapping.HasMember("cofaxTools")) test.web_app.servletMapping.cofaxTools = servletMapping["cofaxTools"].GetString();
+		}
+
+		if (web_app.HasMember("taglib")) {
+			const Value& tagLib = web_app["taglib"];
+			if (tagLib.HasMember("taglib-location")) test.web_app.taglib.taglib_location = tagLib["taglib-location"].GetString();
+			if (tagLib.HasMember("taglib-uri")) test.web_app.taglib.taglib_uri = tagLib["taglib-uri"].GetString();
+		}
+
+		assert(servlet.IsArray());	
+		test.web_app.servlet.resize(servlet.Size());
+		
+		for (SizeType i = 0; i < servlet.Size(); i++){
+			test.web_app.servlet[i].servlet_name = servlet[i]["servlet-name"].GetString();
+			test.web_app.servlet[i].servlet_class = servlet[i]["servlet-class"].GetString();
+
+			if (!servlet[i].HasMember("init-param"))
+				continue;
+
+			const Value& value = servlet[i]["init-param"];
+
+			if (value.HasMember("configGlossary:installationAt")) test.web_app.servlet[i].init_param.configGlossary_installationAt = value["configGlossary:installationAt"].GetString();
+			if (value.HasMember("configGlossary:adminEmail")) test.web_app.servlet[i].init_param.configGlossary_adminEmail = value["configGlossary:adminEmail"].GetString();
+			if (value.HasMember("configGlossary:poweredBy")) test.web_app.servlet[i].init_param.configGlossary_poweredBy = value["configGlossary:poweredBy"].GetString();
+			if (value.HasMember("configGlossary:poweredByIcon")) test.web_app.servlet[i].init_param.configGlossary_poweredByIcon = value["configGlossary:poweredByIcon"].GetString();
+			if (value.HasMember("configGlossary:staticPath")) test.web_app.servlet[i].init_param.configGlossary_staticPath = value["configGlossary:staticPath"].GetString();
+			if (value.HasMember("templateProcessorClass")) test.web_app.servlet[i].init_param.templateProcessorClass = value["templateProcessorClass"].GetString();
+			if (value.HasMember("templateLoaderClass")) test.web_app.servlet[i].init_param.templateLoaderClass = value["templateLoaderClass"].GetString();
+			if (value.HasMember("templatePath")) test.web_app.servlet[i].init_param.templatePath = value["templatePath"].GetString();
+			if (value.HasMember("templateOverridePath")) test.web_app.servlet[i].init_param.templateOverridePath = value["templateOverridePath"].GetString();
+			if (value.HasMember("defaultListTemplate")) test.web_app.servlet[i].init_param.defaultListTemplate = value["defaultListTemplate"].GetString();
+			if (value.HasMember("defaultFileTemplate")) test.web_app.servlet[i].init_param.defaultFileTemplate = value["defaultFileTemplate"].GetString();
+			if (value.HasMember("useJSP")) test.web_app.servlet[i].init_param.useJSP = value["useJSP"].GetBool();
+			if (value.HasMember("jspListTemplate")) test.web_app.servlet[i].init_param.jspListTemplate = value["jspListTemplate"].GetString();
+			if (value.HasMember("jspFileTemplate")) test.web_app.servlet[i].init_param.jspFileTemplate = value["jspFileTemplate"].GetString();
+			if (value.HasMember("cachePackageTagsTrack")) test.web_app.servlet[i].init_param.cachePackageTagsTrack = value["cachePackageTagsTrack"].GetInt();
+			if (value.HasMember("cachePackageTagsStore")) test.web_app.servlet[i].init_param.cachePackageTagsStore = value["cachePackageTagsStore"].GetInt();
+			if (value.HasMember("cachePackageTagsRefresh")) test.web_app.servlet[i].init_param.cachePackageTagsRefresh = value["cachePackageTagsRefresh"].GetInt();
+			if (value.HasMember("cacheTemplatesTrack")) test.web_app.servlet[i].init_param.cacheTemplatesTrack = value["cacheTemplatesTrack"].GetInt();
+			if (value.HasMember("cacheTemplatesStore")) test.web_app.servlet[i].init_param.cacheTemplatesStore = value["cacheTemplatesStore"].GetInt();
+			if (value.HasMember("cacheTemplatesRefresh")) test.web_app.servlet[i].init_param.cacheTemplatesRefresh = value["cacheTemplatesRefresh"].GetInt();
+			if (value.HasMember("cachePagesTrack")) test.web_app.servlet[i].init_param.cachePagesTrack = value["cachePagesTrack"].GetInt();
+			if (value.HasMember("cachePagesStore")) test.web_app.servlet[i].init_param.cachePagesStore = value["cachePagesStore"].GetInt();
+			if (value.HasMember("cachePagesRefresh")) test.web_app.servlet[i].init_param.cachePagesRefresh = value["cachePagesRefresh"].GetInt();
+			if (value.HasMember("cachePagesDirtyRead")) test.web_app.servlet[i].init_param.cachePagesDirtyRead = value["cachePagesDirtyRead"].GetInt();
+			if (value.HasMember("searchEngineListTemplate")) test.web_app.servlet[i].init_param.searchEngineListTemplate = value["searchEngineListTemplate"].GetString();
+			if (value.HasMember("searchEngineFileTemplate")) test.web_app.servlet[i].init_param.searchEngineFileTemplate = value["searchEngineFileTemplate"].GetString();
+			if (value.HasMember("searchEngineRobotsDb")) test.web_app.servlet[i].init_param.searchEngineRobotsDb = value["searchEngineRobotsDb"].GetString();
+			if (value.HasMember("useDataStore")) test.web_app.servlet[i].init_param.useDataStore = value["useDataStore"].GetBool();
+			if (value.HasMember("dataStoreClass")) test.web_app.servlet[i].init_param.dataStoreClass = value["dataStoreClass"].GetString();
+			if (value.HasMember("redirectionClass")) test.web_app.servlet[i].init_param.redirectionClass = value["redirectionClass"].GetString();
+			if (value.HasMember("dataStoreName")) test.web_app.servlet[i].init_param.dataStoreName = value["dataStoreName"].GetString();
+			if (value.HasMember("dataStoreDriver")) test.web_app.servlet[i].init_param.dataStoreDriver = value["dataStoreDriver"].GetString();
+			if (value.HasMember("dataStoreUrl")) test.web_app.servlet[i].init_param.dataStoreUrl = value["dataStoreUrl"].GetString();
+			if (value.HasMember("dataStoreUser")) test.web_app.servlet[i].init_param.dataStoreUser = value["dataStoreUser"].GetString();
+			if (value.HasMember("dataStorePassword")) test.web_app.servlet[i].init_param.dataStorePassword = value["dataStorePassword"].GetString();
+			if (value.HasMember("dataStoreTestQuery")) test.web_app.servlet[i].init_param.dataStoreTestQuery = value["dataStoreTestQuery"].GetString();
+			if (value.HasMember("dataStoreLogFile")) test.web_app.servlet[i].init_param.dataStoreLogFile = value["dataStoreLogFile"].GetString();
+			if (value.HasMember("dataStoreInitConns")) test.web_app.servlet[i].init_param.dataStoreInitConns = value["dataStoreInitConns"].GetInt();
+			if (value.HasMember("dataStoreMaxConns")) test.web_app.servlet[i].init_param.dataStoreMaxConns = value["dataStoreMaxConns"].GetInt();
+			if (value.HasMember("dataStoreConnUsageLimit")) test.web_app.servlet[i].init_param.dataStoreConnUsageLimit = value["dataStoreConnUsageLimit"].GetInt();
+			if (value.HasMember("dataStoreLogLevel")) test.web_app.servlet[i].init_param.dataStoreLogLevel = value["dataStoreLogLevel"].GetString();
+			if (value.HasMember("maxUrlLength")) test.web_app.servlet[i].init_param.maxUrlLength = value["maxUrlLength"].GetInt();
+
+			if (value.HasMember("mailHost")) test.web_app.servlet[i].init_param.mailHost = value["mailHost"].GetString();
+			if (value.HasMember("mailHostOverride")) test.web_app.servlet[i].init_param.mailHostOverride = value["mailHostOverride"].GetString();
+			if (value.HasMember("log")) test.web_app.servlet[i].init_param.log = value["log"].GetInt();
+			if (value.HasMember("logLocation")) test.web_app.servlet[i].init_param.logLocation = value["logLocation"].GetString();
+			if (value.HasMember("logMaxSize")) test.web_app.servlet[i].init_param.logMaxSize = value["logMaxSize"].GetString();
+			if (value.HasMember("dataLog")) test.web_app.servlet[i].init_param.dataLog = value["dataLog"].GetInt();
+			if (value.HasMember("dataLogLocation")) test.web_app.servlet[i].init_param.dataLogLocation = value["dataLogLocation"].GetString();
+			if (value.HasMember("dataLogMaxSize")) test.web_app.servlet[i].init_param.dataLogMaxSize = value["dataLogMaxSize"].GetString();
+			if (value.HasMember("removePageCache")) test.web_app.servlet[i].init_param.removePageCache = value["removePageCache"].GetString();
+			if (value.HasMember("removeTemplateCache")) test.web_app.servlet[i].init_param.removeTemplateCache = value["removeTemplateCache"].GetString();
+			if (value.HasMember("fileTransferFolder")) test.web_app.servlet[i].init_param.fileTransferFolder = value["fileTransferFolder"].GetString();
+			if (value.HasMember("lookInContext")) test.web_app.servlet[i].init_param.lookInContext = value["lookInContext"].GetInt();
+			if (value.HasMember("adminGroupID")) test.web_app.servlet[i].init_param.adminGroupID = value["adminGroupID"].GetInt();
+			if (value.HasMember("betaServer")) test.web_app.servlet[i].init_param.betaServer = value["betaServer"].GetBool();
+		}
+
+	}
+
+    // 2. Modify it by DOM.
+    // Value& s = d["stars"].GetString();
+    // s.SetInt(s.GetInt() + 1);
+
+    // 3. Stringify the DOM
+    // StringBuffer buffer;
+    // Writer<StringBuffer> writer(buffer);
+    // d.Accept(writer);
+
+}
+
+BENCHMARK(BM_rapid_json_load);
+
 BENCHMARK_MAIN();
+

@@ -15,7 +15,8 @@ jobs:
       run: cd build; cmake --build . --target install
     - name: test
       run: ./install/tests
-
+    - name: benchmark
+      run: ./install/benchmark_test
   coverage_on_ubuntu:
 
     runs-on: ubuntu-latest
@@ -50,6 +51,8 @@ jobs:
       run: cd build; cmake --build . --target install --config Release
     - name: test
       run: ./install/tests.exe
+    - name: benchmark
+      run: ./install/benchmark_test.exe
 
   build_on_macOS:
 
@@ -63,4 +66,6 @@ jobs:
       run: cd build; cmake --build . --target install
     - name: test
       run: ./install/tests
+    - name: benchmark
+      run: ./install/benchmark_test
 

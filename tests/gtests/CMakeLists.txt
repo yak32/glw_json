@@ -19,6 +19,7 @@ EXTERNALPROJECT_ADD(googletest
         -DBUILD_GTEST=ON
         PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
         # Disable install step
+        BUILD_COMMAND ""
         INSTALL_COMMAND "")
 
 # Specify include dir

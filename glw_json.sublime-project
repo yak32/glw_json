@@ -20,7 +20,7 @@
 		},
 
 	 	"name": "glw_json",
-		"shell_cmd": "cmake --build . --target install",
+		"shell_cmd": "cmake --build . --target install --config Release",
 		"file_regex": "^[ .\\\\/]*([a-zA-Z]?:?[\\w.\\\\/]+)[()]([0-9]+)[)]([0-9]+)?:?(.*)$",
 		"working_dir": "${project_path}/build",
 		"selector": "source.c, source.c++",
@@ -35,6 +35,13 @@
 			    "shell_cmd": "./install/tests",
 			    "working_dir": "${project_path}",
 			    "name": "run",
+			    "file_regex": "^[.\\\\/]*([A-Z]?:?[\\w.\\\\/]+)[:]([0-9]+)[:]([0-9]+)?:?(.*)$",
+			    "selector": "source.c, source.c++"
+	   		},
+	        {
+			    "shell_cmd": "benchmark_test",
+			    "working_dir": "${project_path}/install",
+			    "name": "run benchmark_test",
 			    "file_regex": "^[.\\\\/]*([A-Z]?:?[\\w.\\\\/]+)[:]([0-9]+)[:]([0-9]+)?:?(.*)$",
 			    "selector": "source.c, source.c++"
 	   		}
