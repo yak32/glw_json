@@ -16,7 +16,7 @@ jobs:
     - name: test
       run: ./install/tests
     - name: benchmark
-      run: ./install/benchmark_test
+      run: cd install; ./benchmark_test
   coverage_on_ubuntu:
 
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
     - name: test
       run: ./install/tests.exe
     - name: benchmark
-      run: ./install/benchmark_test.exe
+      run: cd install; ./benchmark_test.exe
 
   build_on_macOS:
 
@@ -67,5 +67,5 @@ jobs:
     - name: test
       run: ./install/tests
     - name: benchmark
-      run: ./install/benchmark_test
+      run: cd install; ./benchmark_test
 

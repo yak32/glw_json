@@ -69,15 +69,13 @@ Saving to JSON  - linear performance, std::ofstream is used to save data ( some 
 
 benchmark.cpp contains some logic to compare performance with RapidJson (currently parsing and loading only). Current results:
 
-Run on (8 X 3342 MHz CPU s):
+Run on 10 year old PC (8 X 3342 MHz CPU s) - glw_json is 25% slower than Rapid JSON for parsing:
 
 | Benchmark        | Time          | CPU      | Iterations  |
 | ---------------- |:-------------:| --------:| --------:   |
 | BM_glw_json_load | 51367 ns      | 51618 ns | 11200       |
 | BM_glw_json_save | 306253 ns     |299944 ns | 2240        |
 | BM_rapid_json_load | 40850 ns    | 40981 ns | 17920       |
-
-Currently parsing using real-word data is 25% slower than RapidJSON, probably because non-existent data is skipped in RapidJSON benchmark code.
 
 ### Tests
  Run cmake on CMakeLists.txt in tests folder. Tests require C++11 support to compile (glw_json.h doesn't).
