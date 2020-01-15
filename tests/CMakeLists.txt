@@ -20,8 +20,8 @@ ENDIF()
 LINK_DIRECTORIES(${GBENCHMARK_LIBS_DIR})
 
 ADD_EXECUTABLE (benchmark_test benchmark.cpp )
-ADD_DEPENDENCIES(benchmark_test gbenchmark)
-TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark rapidjson)
+ADD_DEPENDENCIES(benchmark_test gbenchmark rapidjson)
+TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark)
 
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(benchmark_test Shlwapi.lib)
