@@ -1,5 +1,5 @@
 # glw_json  ![](https://github.com/yak32/glw_json/workflows/status/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/yak32/glw_json/badge.svg)](https://coveralls.io/github/yak32/glw_json) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-Header-only, cross-platform and compact json serialization for C++ with no memory allocations.
+Header-only, cross-platform and compact json serialization for C++ with no memory allocations for parsing.
 
 # Usage
 Just drop the header (glw_json.h) into your C++ project and include it into a source file
