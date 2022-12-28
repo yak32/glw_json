@@ -15,6 +15,7 @@ Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify t
 ```
 git clone https://github.com/yak32/glw_json.git
 cd glw_json
+git submodule update --init
 mkdir build
 cd build
 cmake ..
