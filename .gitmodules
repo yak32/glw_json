@@ -4,6 +4,3 @@
 [submodule "tests/submodules/googlebenchmark"]
 	path = tests/submodules/googlebenchmark
 	url = https://github.com/google/benchmark.git
-[submodule "tests/submodules/rapidjson"]
-	path = tests/submodules/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
