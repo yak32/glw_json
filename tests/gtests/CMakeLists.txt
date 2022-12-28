@@ -11,10 +11,9 @@ ENDIF()
 
 EXTERNALPROJECT_ADD(googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG main
+        GIT_TAG v1.8.1
         CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
         -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
-        -DCMAKE_CXX_STANDARD=14
         -DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
         -Dgtest_force_shared_crt=${GTEST_FORCE_SHARED_CRT}
         -Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
