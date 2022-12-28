@@ -1,12 +1,15 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5 FATAL_ERROR)
-ADD_SUBDIRECTORY(gtests)
-ADD_SUBDIRECTORY(gbenchmark)
-ADD_SUBDIRECTORY(rapidjson)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+ADD_SUBDIRECTORY(submodules/googletest)
+# ADD_SUBDIRECTORY(submodules/googlebenchmark)
+# ADD_SUBDIRECTORY(gbenchmark)
+# ADD_SUBDIRECTORY(submodules/rapidjson)
 
-INCLUDE_DIRECTORIES(${GTEST_SRC_DIRS})
-INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
-INCLUDE_DIRECTORIES(${GBENCHMARK_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${RAPIDJSON_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(submodules/googletest/googletest/include)
+INCLUDE_DIRECTORIES(submodules/googletest/googletest/src)
+# INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
+# INCLUDE_DIRECTORIES(${GBENCHMARK_INCLUDE_DIR})
+# INCLUDE_DIRECTORIES(${RAPIDJSON_INCLUDE_DIR})
 
 ADD_EXECUTABLE (tests tests.cpp )
 
@@ -19,26 +22,36 @@ ENDIF()
 
 LINK_DIRECTORIES(${GBENCHMARK_LIBS_DIR})
 
-ADD_EXECUTABLE (benchmark_test benchmark.cpp )
-ADD_DEPENDENCIES(benchmark_test gbenchmark rapidjson)
-TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark)
+# ADD_EXECUTABLE (benchmark_test benchmark.cpp )
+# ADD_DEPENDENCIES(benchmark_test gbenchmark rapidjson)
+# TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark)
 
-IF(WIN32)
-	TARGET_LINK_LIBRARIES(benchmark_test Shlwapi.lib)
-ENDIF()
+# IF(WIN32)
+# 	TARGET_LINK_LIBRARIES(benchmark_test Shlwapi.lib)
+# ENDIF()
 
 IF(UNIX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x ")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ")
 	SET(THREADS_PREFER_PTHREAD_FLAG ON)
 	FIND_PACKAGE(Threads REQUIRED)
 	TARGET_LINK_LIBRARIES(tests Threads::Threads)
-	TARGET_LINK_LIBRARIES(benchmark_test Threads::Threads)
+	# TARGET_LINK_LIBRARIES(benchmark_test Threads::Threads)
 ENDIF()
 
 ADD_TEST(test1 tests)
-ADD_DEPENDENCIES(tests googletest)
-INSTALL(TARGETS tests DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
-INSTALL(TARGETS benchmark_test DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.json ${CMAKE_CURRENT_SOURCE_DIR}/data.json
-		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
+ADD_DEPENDENCIES(tests gtest)
+TARGET_LINK_LIBRARIES(tests gtest)
+
+add_custom_command(
+	TARGET tests POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy
+	$<TARGET_FILE:tests>
+	${CMAKE_CURRENT_SOURCE_DIR}/)
+
+
+
+
+# INSTALL(TARGETS benchmark_test DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
+# INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.json ${CMAKE_CURRENT_SOURCE_DIR}/data.json
+#  		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../install/)
 

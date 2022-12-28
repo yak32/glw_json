@@ -9,20 +9,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: submodules
+      run: git submodule update --init
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
-      run: cd build; cmake --build . --target install
+      run: cd build; cmake --build .
     - name: test
-      run: ./install/tests
-    - name: benchmark
-      run: cd install; ./benchmark_test
+      run: ./tests/tests
   coverage_on_ubuntu:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
+    - name: submodules
+      run: git submodule update --init    
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=COVERAGE ..
     - name: build
@@ -45,6 +47,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: submodules
+      run: git submodule update --init
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
@@ -60,6 +64,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: submodules
+      run: git submodule update --init    
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
