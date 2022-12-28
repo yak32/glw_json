@@ -28,7 +28,7 @@ jobs:
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=COVERAGE ..
     - name: build
-      run: cd build; cmake --build . --target install
+      run: cd build; cmake --build . 
     - name: test
       run: ./tests/tests
     - name: install lcov
@@ -52,11 +52,11 @@ jobs:
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
-      run: cd build; cmake --build . --target install --config Release
+      run: cd build; cmake --build . --config Release
     - name: test
       run: ./tests/tests.exe
-    - name: benchmark
-      run: cd install; ./benchmark_test.exe
+    # - name: benchmark
+    #   run: cd install; ./benchmark_test.exe
 
   build_on_macOS:
 
@@ -69,9 +69,9 @@ jobs:
     - name: configure
       run: mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
     - name: build
-      run: cd build; cmake --build . --target install
+      run: cd build; cmake --build . 
     - name: test
       run: ./tests/tests
-    - name: benchmark
-      run: cd install; ./benchmark_test
+    # - name: benchmark
+    #   run: cd install; ./benchmark_test
 
