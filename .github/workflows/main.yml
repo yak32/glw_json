@@ -30,7 +30,7 @@ jobs:
     - name: build
       run: cd build; cmake --build . --target install
     - name: test
-      run: ./install/tests
+      run: ./tests/tests
     - name: install lcov
       run: sudo apt-get install lcov
     - name: generate coverage info
@@ -54,7 +54,7 @@ jobs:
     - name: build
       run: cd build; cmake --build . --target install --config Release
     - name: test
-      run: ./install/tests.exe
+      run: ./tests/tests.exe
     - name: benchmark
       run: cd install; ./benchmark_test.exe
 
@@ -71,7 +71,7 @@ jobs:
     - name: build
       run: cd build; cmake --build . --target install
     - name: test
-      run: ./install/tests
+      run: ./tests/tests
     - name: benchmark
       run: cd install; ./benchmark_test
 
