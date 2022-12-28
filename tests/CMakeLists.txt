@@ -1,15 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5 FATAL_ERROR)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 ADD_SUBDIRECTORY(submodules/googletest)
-# ADD_SUBDIRECTORY(submodules/googlebenchmark)
-# ADD_SUBDIRECTORY(gbenchmark)
-# ADD_SUBDIRECTORY(submodules/rapidjson)
+ADD_SUBDIRECTORY(submodules/googlebenchmark)
+ADD_SUBDIRECTORY(submodules/rapidjson)
 
 INCLUDE_DIRECTORIES(submodules/googletest/googletest/include)
 INCLUDE_DIRECTORIES(submodules/googletest/googletest/src)
-# INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
-# INCLUDE_DIRECTORIES(${GBENCHMARK_INCLUDE_DIR})
-# INCLUDE_DIRECTORIES(${RAPIDJSON_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(submodules/googlebenchmark/include)
+INCLUDE_DIRECTORIES(submodules/rapidjson/include)
 
 ADD_EXECUTABLE (tests tests.cpp )
 
@@ -23,8 +21,8 @@ ENDIF()
 LINK_DIRECTORIES(${GBENCHMARK_LIBS_DIR})
 
 # ADD_EXECUTABLE (benchmark_test benchmark.cpp )
-# ADD_DEPENDENCIES(benchmark_test gbenchmark rapidjson)
-# TARGET_LINK_LIBRARIES(benchmark_test debug benchmarkd optimized benchmark)
+# ADD_DEPENDENCIES(benchmark_test benchmark rapidjson)
+# TARGET_LINK_LIBRARIES(benchmark_test benchmark)
 
 # IF(WIN32)
 # 	TARGET_LINK_LIBRARIES(benchmark_test Shlwapi.lib)

@@ -20,7 +20,7 @@
 		},
 
 	 	"name": "glw_json",
-		"shell_cmd": "cmake --build . --target install --config Release",
+		"shell_cmd": "cmake --build . --config Release",
 		"file_regex": "^[ .\\\\/]*([a-zA-Z]?:?[\\w.\\\\/]+)[()]([0-9]+)[)]([0-9]+)?:?(.*)$",
 		"working_dir": "${project_path}/build",
 		"selector": "source.c, source.c++",

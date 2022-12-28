@@ -18,7 +18,7 @@ cd glw_json
 mkdir build
 cd build
 cmake ..
-cmake --build . --target install
+cmake --build . 
  ./../install/tests
 ```
 (use Git Bash on Windows)
