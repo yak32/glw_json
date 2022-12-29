@@ -12,6 +12,9 @@ Just drop the header (glw_json.h) into your C++ project and include it into a so
 Licensed under [BSD](https://opensource.org/licenses/BSD-2-Clause) to simplify the usage.
 
 ### How to build and run tests
+
+Install cmake
+
 ```
 git clone https://github.com/yak32/glw_json.git
 cd glw_json
@@ -19,8 +22,8 @@ git submodule update --init
 mkdir build
 cd build
 cmake ..
-cmake --build . --target install
- ./../install/tests
+cmake --build . 
+ ./../tests/tests
 ```
 (use Git Bash on Windows)
 
@@ -57,7 +60,7 @@ int main(){
 
 To avoid hash maps with allocations, values should be serialized in alphabetical order.
 BTW, initial implementation with hash map was 2x times slower (for average sized json object with around 50 properties)
-With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
+To sort properties inside of serialize function - With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
 
 ### Dependencies
  STL, c-runtime.
