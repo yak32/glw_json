@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <string.h>
 #include <cmath>
+#include <errno.h>
 #include <assert.h>
 
 // maximum count of properties per any JSON object
@@ -153,20 +154,22 @@ inline bool compare_props(const property& p1, const property& p2) {
 inline const char* load(const char* str, size_t len, int& v, int options) {
 	GLW_UNUSED(options);
 	char* pEnd;
+	errno = 0;
 	long int l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtol(str, &pEnd, 16);
 	v = (int)l;
-	return (pEnd < str + len) || (l <= INT_MIN || l >= INT_MAX) ? str : pEnd;
+	return (pEnd < str + len) || (errno == ERANGE) ? str : pEnd;
 }
 inline const char* load(const char* str, size_t len, unsigned int& v, int options) {
 	GLW_UNUSED(options);
 	char* pEnd;
+	errno = 0;
 	unsigned long l = strtoul(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtoul(str, &pEnd, 16);
 	v = (unsigned int)l;
-	return v < UINT_MAX && pEnd == str + len ? pEnd : str;
+	return errno != ERANGE && l < UINT_MAX && pEnd == str + len && str[0] != '-' ? pEnd : str;
 }
 inline const char* load(const char* str, size_t len, char& v, int options) {
 	GLW_UNUSED(options);
