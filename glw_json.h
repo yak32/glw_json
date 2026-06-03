@@ -1,4 +1,4 @@
-// glw_json.h - v0.1 - json parser for C/C++ BSD Clause 2
+// glw_json.h - v0.1 - json parser for C/C++ - BSD-3
 // Iakov Sumygin, May 2016
 
 #ifndef _GLW_JSON_
@@ -18,8 +18,8 @@
 #define MAX_JSON_PROPS 300
 #define SERIALIZE(prop) t.process(#prop, v.prop)
 #define GLW_UNUSED(x) (void)x
-#ifndef LOG_ERROR
-	#define LOG_ERROR(...)
+#ifndef LOG_JSON_ERROR
+	#define LOG_JSON_ERROR(...)
 #endif
 namespace json {
 
@@ -27,6 +27,7 @@ const char quote = '\"';
 
 const int JSON_OK = 0;
 const int JSON_FAIL = -1;
+const int JSON_FILESYSTEM_ERROR = -2;
 enum JSON_OPTIONS {
 	RESET_IF_ABSENT = 1, // if property is absent, reset variable to 0
 	ERROR_IF_ABSENT = 2  // if property is absent, return error
@@ -152,22 +153,38 @@ inline bool compare_props(const property& p1, const property& p2) {
 inline const char* load(const char* str, size_t len, int& v, int options) {
 	GLW_UNUSED(options);
 	char* pEnd;
-	errno = 0;
 	long int l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtol(str, &pEnd, 16);
 	v = (int)l;
-	return (pEnd < str + len) || (errno == ERANGE) ? str : pEnd;
+	return (pEnd < str + len) || (l <= INT_MIN || l >= INT_MAX) ? str : pEnd;
 }
 inline const char* load(const char* str, size_t len, unsigned int& v, int options) {
 	GLW_UNUSED(options);
 	char* pEnd;
-	errno = 0;
 	unsigned long l = strtoul(str, &pEnd, 10);
 	if (pEnd < str + len)
 		l = strtoul(str, &pEnd, 16);
 	v = (unsigned int)l;
-	return errno != ERANGE && l < UINT_MAX && pEnd == str + len && str[0] != '-' ? pEnd : str;
+	return v < UINT_MAX && pEnd == str + len ? pEnd : str;
+}
+inline const char* load(const char* str, size_t len, char& v, int options) {
+	GLW_UNUSED(options);
+	char* pEnd;
+	long l = strtol(str, &pEnd, 10);
+	if (pEnd < str + len)
+		l = strtol(str, &pEnd, 16);
+	v = (char)l;
+	return l <= CHAR_MAX && l>= CHAR_MIN && pEnd == str + len ? pEnd : str;
+}
+inline const char* load(const char* str, size_t len, unsigned char& v, int options) {
+	GLW_UNUSED(options);
+	char* pEnd;
+	unsigned long l = strtoul(str, &pEnd, 10);
+	if (pEnd < str + len)
+		l = strtoul(str, &pEnd, 16);
+	v = (unsigned char)l;
+	return l <= UCHAR_MAX && pEnd == str + len ? pEnd : str;
 }
 template <typename c, typename t, typename a>
 const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v, int options) {
@@ -210,10 +227,6 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 
 // overrides for embedded objects and pointers to object
 template <typename V> const char* load(const char* obj_start, size_t len, V*& value, int options) {
-	if (len == 4 && strncmp(obj_start, "null", len) == 0){
-		value = nullptr;
-		return obj_start + len;
-	}
 	value = new V;
 	return load(obj_start, len, *value, options);
 }
@@ -270,8 +283,8 @@ struct LoadObject {
 #endif
 		if (current < props_size &&
 			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
-			const char* end =
-				load(props[current].value.str, props[current].value.len, value, options);
+
+			const char* end = load(props[current].value.str, props[current].value.len, value, options);
 			if (end == props[current].value.str + props[current].value.len) {
 				++current;
 				return true;
@@ -286,7 +299,11 @@ struct LoadObject {
 		current = props_size; // skip parsing
 		return false;
 	}
+	template <typename V> bool process_skip_empty(const char* name, V& value) {
+		return process(name, value);
+	}
 };
+
 template <typename V> const char* load(const char* in, size_t len, V& t, int options) {
 	const char* start = in;
 	prop_map props;
@@ -312,26 +329,6 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 	return in;
 }
 template <typename T>
-int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
-	std::ifstream is(filename, std::ios::binary);
-	if (!is)
-		return false;
-
-	is.seekg(0, is.end);
-	int length = (int)is.tellg();
-	is.seekg(0, is.beg);
-	char* buffer = new char[length + 1];
-	is.read(buffer, length);
-	buffer[length] = 0;
-	is.close();
-	const char* pos = load(buffer, length + 1, t, options);
-	delete[] buffer;
-	if (pos != buffer + length) {
-		return get_error_line(buffer, pos);
-	}
-	return JSON_OK;
-}
-template <typename T>
 int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)-1,
 							int options = RESET_IF_ABSENT) {
 	if (len == (size_t)-1)
@@ -341,6 +338,34 @@ int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)
 		return get_error_line(json_string, pos); // return error position
 	}
 	return JSON_OK;
+}
+template <typename T, typename A>
+int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_t len = (size_t)-1,	int options = RESET_IF_ABSENT) {
+	if (len == (size_t)-1)
+		len = strlen(json_string);
+	const char* pos = load_container(json_string, len + 1, t, options);
+	if (pos != json_string + len) {
+		return get_error_line(json_string, pos); // return error position
+	}
+	return JSON_OK;
+}
+template <typename T>
+int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
+    std::ifstream is(filename, std::ios::binary);
+    if (!is)
+        return JSON_FILESYSTEM_ERROR;
+
+    is.seekg(0, is.end);
+    int length = (int)is.tellg();
+    is.seekg(0, is.beg);
+    char* buffer = new char[length + 1];
+    is.read(buffer, length);
+    buffer[length] = 0;
+    is.close();
+    //const char* pos = load(buffer, length + 1, t, options);
+    int ret = load_object_from_string(buffer, t, length, options);
+    delete[] buffer;
+    return ret;
 }
 // **************************************** saving JSON ***********************************
 
@@ -360,6 +385,10 @@ inline void save(std::ostream& out, float& t, int tabs) {
 	GLW_UNUSED(tabs);
 	out << t;
 }
+inline void save(std::ostream& out, char& t, int tabs) {
+	GLW_UNUSED(tabs);
+	out << t;
+}
 inline void save(std::ostream& out, const char* t, int tabs) {
 	GLW_UNUSED(tabs);
 	out << quote << t << quote;
@@ -374,7 +403,8 @@ template <typename T> bool save(std::ostream& out, T& t, int tabs);
 template <typename T> bool save(std::ostream& out, T*& t, int tabs){
 	if (t)
 		return save(out, *t, tabs);
-	out << "null";
+	else
+		out << "{}";
 	return true;
 }
 template <typename iterator>
@@ -386,7 +416,7 @@ bool save_container(std::ostream& out, iterator begin, iterator end, int tabs) {
 		save(out, *i, tabs + 1);
 	}
 	out << ']';
-	return out.fail();
+	return !out.fail();
 }
 template <typename T, typename A> bool save(std::ostream& out, std::vector<T, A>& t, int tabs) {
 	return save_container(out, t.begin(), t.end(), tabs);
@@ -408,6 +438,11 @@ struct SaveObject {
 			return false;
 		return true;
 	}
+	template <typename T> bool process_skip_empty(const char* name, T& t) {
+		if (t == T())
+			return true;
+		return process(name, t);
+	}
 };
 template <typename T> bool save(std::ostream& out, T& t, int tabs) {
 	out << "{\n";
@@ -424,19 +459,29 @@ template <typename T> int save_object_to_stream(T& t, std::ostream& out) {
 	out << "\n";
 	return JSON_OK;
 }
+
+template <typename T, typename A> 
+int save_object_to_stream(std::vector<T, A>& t, std::ostream & out) {
+	if (!json::save_container(out, t.begin(), t.end(), 0))
+		return JSON_FAIL;
+	out << "\n";
+	return JSON_OK;
+}
+
 // serialize single object
-template <typename T> int save_object_to_file(const char* filename, T& t) {
+template <typename T> 
+int save_object_to_file(const char* filename, T& t) {
 	try {
 		std::ofstream out(filename);
 		return json::save_object_to_stream(t, out);
 	}
 	catch (std::exception& e) {
 		GLW_UNUSED(e);
-		LOG_ERROR("saving json (%s) failed, error: %s", filename, e.what());
+		LOG_JSON_ERROR("saving json (%s) failed, error: %s", filename, e.what());
 		return JSON_FAIL;
 	}
 	return JSON_OK;
 }
-}
+} // namespace json
 
 #endif // _GLW_JSON_
