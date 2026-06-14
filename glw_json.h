@@ -31,8 +31,14 @@ const int JSON_FAIL = -1;
 const int JSON_FILESYSTEM_ERROR = -2;
 enum JSON_OPTIONS {
 	RESET_IF_ABSENT = 1, // if property is absent, reset variable to 0
-	ERROR_IF_ABSENT = 2  // if property is absent, return error
+	ERROR_IF_ABSENT = 2, // if property is absent, return error
+	// Parse any standard JSON: tolerate properties the struct doesn't read, in any order, and
+	// fields serialized in any order (looked up by binary search). ON by default. Clear it for the
+	// faster sorted linear-merge, which requires fields serialized in ascending name order and that
+	// every JSON property be consumed.
+	PARSE_ANY = 4
 };
+const int DEFAULT_OPTIONS = RESET_IF_ABSENT | PARSE_ANY;
 
 // struct to hold refs to name-values pairs from json file
 struct string_ref {
@@ -150,6 +156,22 @@ inline bool operator<(const string_ref& s1, const string_ref& s2) {
 }
 inline bool compare_props(const property& p1, const property& p2) {
 	return p1.param < p2.param;
+}
+// Compare a parsed property name (ref, not null-terminated) against a C-string, with the same
+// ordering as operator<(string_ref) so binary search over the sorted prop map is correct.
+inline int cmp_ref_name(const string_ref& p, const char* name) {
+	size_t i = 0;
+	while (i < p.len && name[i]) {
+		const unsigned char a = (unsigned char)p.str[i], b = (unsigned char)name[i];
+		if (a != b)
+			return a < b ? -1 : 1;
+		++i;
+	}
+	if (i < p.len)
+		return 1; // name ended first -> p is longer -> p > name
+	if (name[i])
+		return -1; // p ended first -> p is shorter -> p < name
+	return 0;
 }
 inline const char* load(const char* str, size_t len, int& v, int options) {
 	GLW_UNUSED(options);
@@ -276,31 +298,52 @@ struct LoadObject {
 	const char* error_pos;
 	const char* start;
 	const char* _prev_name;
+	// Load the parsed property `props[idx]` into `value`; set error_pos on a malformed value.
+	template <typename V> bool load_prop(size_t idx, V& value) {
+		const char* end = load(props[idx].value.str, props[idx].value.len, value, options);
+		if (end == props[idx].value.str + props[idx].value.len)
+			return true;
+		error_pos = end;
+		current = props_size; // stop parsing on a malformed value
+		return false;
+	}
+	template <typename V> bool handle_absent(V& value) {
+		if (options & RESET_IF_ABSENT)
+			value = V();
+		if (options & ERROR_IF_ABSENT) {
+			error_pos = start; // required property missing
+			current = props_size;
+			return false;
+		}
+		return true;
+	}
 	template <typename V> bool process(const char* name, V& value) {
+		if (options & PARSE_ANY) {
+			// Standard JSON: binary-search the sorted prop map; tolerate extra/out-of-order props
+			// and any field order (no alphabetical requirement).
+			size_t lo = 0, hi = props_size;
+			while (lo < hi) {
+				const size_t mid = (lo + hi) >> 1;
+				if (cmp_ref_name(props[mid].param, name) < 0)
+					lo = mid + 1;
+				else
+					hi = mid;
+			}
+			if (lo < props_size && cmp_ref_name(props[lo].param, name) == 0)
+				return load_prop(lo, value);
+			return handle_absent(value);
+		}
 #ifndef NDEBUG
-		// this check could fail if name is dynamically allocated and was freed after usage
-		// if Sublime Text 3 is used, select everything inside serialize() and press F9
+		// fast path requires ascending field order (select everything inside serialize() + F9 in
+		// Sublime Text 3 to sort)
 		if (strcmp(_prev_name, name) >= 0)
-			assert(false && "variables should be serialized in alphabetical order");
+			assert(false && "variables should be serialized in alphabetical order (or use PARSE_ANY)");
 		_prev_name = name;
 #endif
 		if (current < props_size &&
-			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
-
-			const char* end = load(props[current].value.str, props[current].value.len, value, options);
-			if (end == props[current].value.str + props[current].value.len) {
-				++current;
-				return true;
-			}
-			error_pos = end;
-		}
-		else if (!(options & ERROR_IF_ABSENT)) {
-			if (options & RESET_IF_ABSENT)
-				value = V();
-			return true;
-		}
-		current = props_size; // skip parsing
-		return false;
+			strncmp(name, props[current].param.str, props[current].param.len) == 0)
+			return load_prop(current++, value);
+		return handle_absent(value);
 	}
 	template <typename V> bool process_skip_empty(const char* name, V& value) {
 		return process(name, value);
@@ -325,7 +368,11 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 	if (!serialize(serializer, t))
 		return serializer.error_pos;
 
-	if (serializer.current < serializer.props_size)
+	if (serializer.error_pos) // a property value was malformed
+		return serializer.error_pos;
+
+	// Fast (sorted) mode requires every property to be consumed; PARSE_ANY tolerates extras.
+	if (!(options & PARSE_ANY) && serializer.current < serializer.props_size)
 		return props[serializer.current].param.str;
 
 	in = skip_ws(in + 1); // skip whitespace after
@@ -333,7 +380,7 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 }
 template <typename T>
 int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)-1,
-							int options = RESET_IF_ABSENT) {
+							int options = DEFAULT_OPTIONS) {
 	if (len == (size_t)-1)
 		len = strlen(json_string);
 	const char* pos = load(json_string, len + 1, t, options);
@@ -343,7 +390,7 @@ int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)
 	return JSON_OK;
 }
 template <typename T, typename A>
-int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_t len = (size_t)-1,	int options = RESET_IF_ABSENT) {
+int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_t len = (size_t)-1,	int options = DEFAULT_OPTIONS) {
 	if (len == (size_t)-1)
 		len = strlen(json_string);
 	const char* pos = load_container(json_string, len + 1, t, options);
@@ -353,7 +400,7 @@ int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_
 	return JSON_OK;
 }
 template <typename T>
-int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
+int load_object_from_file(const char* filename, T& t, int options = DEFAULT_OPTIONS) {
     std::ifstream is(filename, std::ios::binary);
     if (!is)
         return JSON_FILESYSTEM_ERROR;
