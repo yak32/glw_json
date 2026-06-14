@@ -1,5 +1,6 @@
 # glw_json  ![](https://github.com/yak32/glw_json/workflows/status/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/yak32/glw_json/badge.svg)](https://coveralls.io/github/yak32/glw_json) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-Header-only, cross-platform and compact json serialization for C++ with no memory allocations for parsing.
+Header-only, cross-platform and compact JSON serialization for C++ with no heap allocations for
+property parsing. Parses any standard JSON by default.
 
 # Usage
 Just drop the header (glw_json.h) into your C++ project and include it into a source file
@@ -58,9 +59,41 @@ int main(){
 }
 ```
 
-To avoid hash maps with allocations, values should be serialized in alphabetical order.
-BTW, initial implementation with hash map was 2x times slower (for average sized json object with around 50 properties)
-To sort properties inside of serialize function - With Sublime Text 2/3: select everything inside serialize() and press F9 - it will sort properties automatically.
+### Options
+
+The `load_object_from_*` functions take an options bitmask. The default is
+`DEFAULT_OPTIONS = RESET_IF_ABSENT | PARSE_ANY`:
+
+- **`PARSE_ANY`** *(default)* — parse **any standard JSON**: properties may appear in any order, the
+  JSON may carry properties the struct does not read, and `serialize()` may list its fields in any
+  order. Each field is found by binary search over the sorted property map.
+- *(omit `PARSE_ANY`)* — a faster sorted linear merge for trusted, clean data. It requires that
+  **(a)** `serialize()` lists fields in ascending name order and **(b)** every JSON property is
+  consumed by the struct; otherwise loading fails. (The initial hash-map implementation was ~2x
+  slower; the sorted merge avoids per-property allocations.) To sort the fields inside a
+  `serialize()` body in Sublime Text 2/3, select its contents and press F9.
+- **`RESET_IF_ABSENT`** *(default)* — a field missing from the JSON is reset to `V()`.
+- **`ERROR_IF_ABSENT`** — a missing field makes loading fail.
+
+A malformed value (wrong type or bad syntax) always fails and returns the offending line number, in
+either parsing mode.
+
+### Example: reading a subset of a larger JSON (the default)
+
+The `serialize()` object parameter must be named `v` — that is the name the `SERIALIZE(field)`
+macro expands to (`t.process("field", v.field)`).
+
+```c++
+struct point { float x, y; };                 // fields may be listed in any order under PARSE_ANY
+template <typename T> bool serialize(T& t, point& v) {
+	return SERIALIZE(x) && SERIALIZE(y);
+}
+
+// the JSON carries extra "label" and "z" that the struct ignores — it still parses:
+const char* json = R"({"label":"p0","x":1.5,"y":-2.0,"z":9.0})";
+point pt;
+bool ok = (load_object_from_string(json, pt) == JSON_OK);  // ok == true, pt == {1.5, -2.0}
+```
 
 ### Dependencies
  STL, c-runtime.

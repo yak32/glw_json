@@ -798,3 +798,151 @@ TEST(ObjectPointerArrayInObject, LoadObjectArray2InObjectNoComma) {
 	EXPECT_TRUE(load_object_from_string(json_str, v) == 7); // 7 - error line
 }
 
+
+// ************* PARSE_ANY: standard JSON with extra / out-of-order properties *************
+// Mirrors real SOG (meta.json) and streamed-SOG (lod-meta.json) assets, which carry properties
+// a reader struct doesn't consume ("asset", "environment", ...). Default options now parse these.
+
+struct sog_means {
+	std::vector<float> mins, maxs;
+	std::vector<std::string> files;
+};
+// fields intentionally NOT in alphabetical order — PARSE_ANY looks up by name
+template <typename T> bool serialize(T& t, sog_means& v) {
+	SERIALIZE(mins);
+	SERIALIZE(maxs);
+	SERIALIZE(files);
+	return true;
+}
+struct sog_meta {
+	int version, count;
+	sog_means means;
+};
+template <typename T> bool serialize(T& t, sog_meta& v) {
+	SERIALIZE(version);
+	SERIALIZE(count);
+	SERIALIZE(means);
+	return true;
+}
+
+TEST(ParseAny, SogMetaWithUnreadAssetAndExtraProps) {
+	const char* json_str =
+		"{\"version\":2,\"asset\":{\"generator\":\"splat-transform\"},\"count\":2442964,"
+		"\"means\":{\"mins\":[-0.4,-0.6,-0.3],\"maxs\":[0.4,0.6,0.3],"
+		"\"files\":[\"means_l.webp\",\"means_u.webp\"]},\"extra\":[1,2,3]}";
+	sog_meta v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(2, v.version);
+	EXPECT_EQ(2442964, v.count);
+	EXPECT_EQ(3u, v.means.mins.size());
+	EXPECT_FLOAT_EQ(-0.6f, v.means.mins[1]);
+	EXPECT_EQ(2u, v.means.files.size());
+	EXPECT_TRUE(v.means.files[0] == "means_l.webp");
+}
+
+struct ssog_manifest {
+	std::vector<std::string> filenames;
+	int lodLevels;
+};
+template <typename T> bool serialize(T& t, ssog_manifest& v) {
+	SERIALIZE(filenames);
+	SERIALIZE(lodLevels);
+	return true;
+}
+
+TEST(ParseAny, SsogManifestWithNullEnvironmentAndUnreadTree) {
+	const char* json_str =
+		"{\"lodLevels\":3,\"environment\":null,"
+		"\"filenames\":[\"0_0/meta.json\",\"1_0/meta.json\"],"
+		"\"tree\":{\"bound\":{\"min\":[0,0,0],\"max\":[1,1,1]},\"children\":[]}}";
+	ssog_manifest v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(3, v.lodLevels);
+	EXPECT_EQ(2u, v.filenames.size());
+	EXPECT_TRUE(v.filenames[1] == "1_0/meta.json");
+}
+
+struct two_ints {
+	int a, b;
+};
+template <typename T> bool serialize(T& t, two_ints& v) {
+	SERIALIZE(a);
+	SERIALIZE(b);
+	return true;
+}
+
+TEST(ParseAny, TrailingUnknownProperty) {
+	const char* json_str = "{\"a\":1,\"b\":2,\"zzz\":99}";
+	two_ints v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(1, v.a);
+	EXPECT_EQ(2, v.b);
+}
+TEST(ParseAny, LeadingAndMiddleUnknownProperties) {
+	const char* json_str = "{\"aaa\":7,\"a\":1,\"middle\":8,\"b\":2,\"zzz\":9}";
+	two_ints v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(1, v.a);
+	EXPECT_EQ(2, v.b);
+}
+
+// struct fields serialized out of alphabetical order — allowed under PARSE_ANY
+struct unsorted_fields {
+	int zebra, apple;
+};
+template <typename T> bool serialize(T& t, unsorted_fields& v) {
+	SERIALIZE(zebra);
+	SERIALIZE(apple);
+	return true;
+}
+TEST(ParseAny, FieldsSerializedOutOfOrder) {
+	const char* json_str = "{\"apple\":11,\"zebra\":22}";
+	unsorted_fields v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(22, v.zebra);
+	EXPECT_EQ(11, v.apple);
+}
+
+TEST(ParseAny, MalformedValueStillErrors) {
+	// extra props are fine, but a bad value is still an error (string where int expected)
+	const char* json_str = "{\"a\":1,\"x\":5,\"b\":\"oops\"}";
+	two_ints v;
+	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v));
+}
+TEST(ParseAny, AbsentFieldResets) {
+	const char* json_str = "{\"a\":42,\"other\":1}";
+	two_ints v;
+	v.b = 123;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_EQ(42, v.a);
+	EXPECT_EQ(0, v.b); // RESET_IF_ABSENT
+}
+
+// ************* fast sorted mode (PARSE_ANY cleared) keeps its strict contract *************
+TEST(FastSortedMode, CleanSortedJsonLoads) {
+	const char* json_str = "{\"a\":1,\"b\":2}";
+	two_ints v;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v, (size_t)-1, RESET_IF_ABSENT));
+	EXPECT_EQ(1, v.a);
+	EXPECT_EQ(2, v.b);
+}
+TEST(FastSortedMode, ExtraPropertyIsRejected) {
+	const char* json_str = "{\"a\":1,\"b\":2,\"c\":3}";
+	two_ints v;
+	EXPECT_FALSE(JSON_OK == load_object_from_string(json_str, v, (size_t)-1, RESET_IF_ABSENT));
+}
+
+// Mirrors the "reading a subset of a larger JSON" example in README.md — keep them in sync.
+struct readme_point {
+	float x, y;
+};
+template <typename T> bool serialize(T& t, readme_point& v) {
+	return SERIALIZE(x) && SERIALIZE(y);
+}
+TEST(Readme, SubsetOfLargerJson) {
+	const char* json = R"({"label":"p0","x":1.5,"y":-2.0,"z":9.0})";
+	readme_point pt;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json, pt));
+	EXPECT_FLOAT_EQ(1.5f, pt.x);
+	EXPECT_FLOAT_EQ(-2.0f, pt.y);
+}

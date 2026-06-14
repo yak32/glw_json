@@ -8,6 +8,7 @@
 #include <iterator>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <algorithm>
 #include <limits.h>
 #include <string.h>
@@ -31,20 +32,25 @@ const int JSON_FAIL = -1;
 const int JSON_FILESYSTEM_ERROR = -2;
 enum JSON_OPTIONS {
 	RESET_IF_ABSENT = 1, // if property is absent, reset variable to 0
-	ERROR_IF_ABSENT = 2  // if property is absent, return error
+	ERROR_IF_ABSENT = 2, // if property is absent, return error
+	// Parse any standard JSON: tolerate properties the struct doesn't read, in any order, and
+	// fields serialized in any order (looked up by binary search). ON by default. Clear it for the
+	// faster sorted linear-merge, which requires fields serialized in ascending name order and that
+	// every JSON property be consumed.
+	PARSE_ANY = 4
 };
+const int DEFAULT_OPTIONS = RESET_IF_ABSENT | PARSE_ANY;
 
-// struct to hold refs to name-values pairs from json file
-struct string_ref {
-	const char* str;
-	size_t len;
-};
 struct property {
-	string_ref param, value;
+	std::string_view param, value;
 };
 typedef property prop_map[MAX_JSON_PROPS];
 
 #define SERIALIZE_NAME (out << '\"' << name << "\": ")
+
+inline const char* sv_end(std::string_view sv) {
+	return sv.data() + sv.size();
+}
 
 // **************************************** loading JSON ***********************************
 inline const char* skip_ws(const char* in) {
@@ -104,9 +110,10 @@ inline const char* load_props(const char* in, const char* end, prop_map& props,
 			return in - 1; // error
 		// parse value name
 		property p;
-		p.param.str = in + 1;
-		p.param.len = find_ch(p.param.str, quote) - p.param.str;
-		in = p.param.str + p.param.len;
+		const char* name_start = in + 1;
+		const size_t name_len = find_ch(name_start, quote) - name_start;
+		p.param = std::string_view(name_start, name_len);
+		in = name_start + name_len;
 		if (!*in)
 			return in - 1;
 		in = skip_ws(in + 1);
@@ -115,9 +122,9 @@ inline const char* load_props(const char* in, const char* end, prop_map& props,
 
 		// parse value
 		in = skip_ws(in + 1);
-		p.value.str = in;
-		p.value.len = get_value_len(in);
-		in += p.value.len;
+		const size_t value_len = get_value_len(in);
+		p.value = std::string_view(in, value_len);
+		in += value_len;
 		if (in >= end)
 			return end - 1; // error - value is not closed properly
 
@@ -137,22 +144,13 @@ inline const char* load_props(const char* in, const char* end, prop_map& props,
 	}
 	return in - 1; // error
 }
-inline bool operator<(const string_ref& s1, const string_ref& s2) {
-	size_t i = 0;
-	while (i < s1.len && i < s2.len) {
-		if (s1.str[i] < s2.str[i])
-			return true;
-		if (s2.str[i] < s1.str[i])
-			return false;
-		++i;
-	}
-	return s1.len < s2.len;
-}
 inline bool compare_props(const property& p1, const property& p2) {
 	return p1.param < p2.param;
 }
-inline const char* load(const char* str, size_t len, int& v, int options) {
+inline const char* load(std::string_view sv, int& v, int options) {
 	GLW_UNUSED(options);
+	const char* str = sv.data();
+	const size_t len = sv.size();
 	char* pEnd;
 	errno = 0;
 	long int l = strtol(str, &pEnd, 10);
@@ -161,8 +159,10 @@ inline const char* load(const char* str, size_t len, int& v, int options) {
 	v = (int)l;
 	return (pEnd < str + len) || (errno == ERANGE) ? str : pEnd;
 }
-inline const char* load(const char* str, size_t len, unsigned int& v, int options) {
+inline const char* load(std::string_view sv, unsigned int& v, int options) {
 	GLW_UNUSED(options);
+	const char* str = sv.data();
+	const size_t len = sv.size();
 	char* pEnd;
 	errno = 0;
 	unsigned long l = strtoul(str, &pEnd, 10);
@@ -171,8 +171,10 @@ inline const char* load(const char* str, size_t len, unsigned int& v, int option
 	v = (unsigned int)l;
 	return errno != ERANGE && l < UINT_MAX && pEnd == str + len && str[0] != '-' ? pEnd : str;
 }
-inline const char* load(const char* str, size_t len, char& v, int options) {
+inline const char* load(std::string_view sv, char& v, int options) {
 	GLW_UNUSED(options);
+	const char* str = sv.data();
+	const size_t len = sv.size();
 	char* pEnd;
 	long l = strtol(str, &pEnd, 10);
 	if (pEnd < str + len)
@@ -180,8 +182,10 @@ inline const char* load(const char* str, size_t len, char& v, int options) {
 	v = (char)l;
 	return l <= CHAR_MAX && l>= CHAR_MIN && pEnd == str + len ? pEnd : str;
 }
-inline const char* load(const char* str, size_t len, unsigned char& v, int options) {
+inline const char* load(std::string_view sv, unsigned char& v, int options) {
 	GLW_UNUSED(options);
+	const char* str = sv.data();
+	const size_t len = sv.size();
 	char* pEnd;
 	unsigned long l = strtoul(str, &pEnd, 10);
 	if (pEnd < str + len)
@@ -190,31 +194,33 @@ inline const char* load(const char* str, size_t len, unsigned char& v, int optio
 	return l <= UCHAR_MAX && pEnd == str + len ? pEnd : str;
 }
 template <typename c, typename t, typename a>
-const char* load(const char* str, size_t len, std::basic_string<c, t, a>& v, int options) {
+const char* load(std::string_view sv, std::basic_string<c, t, a>& v, int options) {
 	GLW_UNUSED(options);
-	if (len < 2)
-		return str; // it's not a string
-	v.assign(str + 1, len - 2);
-	return str + len;
+	if (sv.size() < 2)
+		return sv.data(); // it's not a string
+	v.assign(sv.data() + 1, sv.size() - 2);
+	return sv_end(sv);
 }
-inline const char* load(const char* str, size_t len, float& v, int options) {
+inline const char* load(std::string_view sv, float& v, int options) {
 	GLW_UNUSED(options);
+	const char* str = sv.data();
+	const size_t len = sv.size();
 	char* pEnd;
 	v = strtof(str, &pEnd);
 	if (v == HUGE_VAL || v == -HUGE_VAL)
 		return str;
 
-	return pEnd < str + len ? str : str + len;
+	return pEnd < str + len ? str : sv_end(sv);
 }
-inline const char* load(const char* str, size_t len, bool& v, int options) {
+inline const char* load(std::string_view sv, bool& v, int options) {
 	GLW_UNUSED(options);
-	if (len == 4 && !strncmp(str, "true", len))
+	if (sv == "true")
 		v = true;
-	else if (len == 5 && !strncmp(str, "false", len))
+	else if (sv == "false")
 		v = false;
 	else
-		return str;
-	return str + len;
+		return sv.data();
+	return sv_end(sv);
 }
 inline int get_error_line(const char* in, const char* pos) {
 	int lines = 0;
@@ -226,16 +232,16 @@ inline int get_error_line(const char* in, const char* pos) {
 	}
 	return lines + 1;
 }
-template <typename V> const char* load(const char* in, size_t len, V& t, int options);
+template <typename V> const char* load(std::string_view sv, V& t, int options);
 
 // overrides for embedded objects and pointers to object
-template <typename V> const char* load(const char* obj_start, size_t len, V*& value, int options) {
+template <typename V> const char* load(std::string_view sv, V*& value, int options) {
 	value = new V;
-	return load(obj_start, len, *value, options);
+	return load(sv, *value, options);
 }
 template <typename containter_type>
-const char* load_container(const char* in, size_t len, containter_type& t, int options) {
-	GLW_UNUSED(len);
+const char* load_container(std::string_view sv, containter_type& t, int options) {
+	const char* in = sv.data();
 	if (*in != '[')
 		return in - 1;
 
@@ -243,8 +249,9 @@ const char* load_container(const char* in, size_t len, containter_type& t, int o
 	typename containter_type::value_type v;
 	do {
 		in = skip_ws(in + 1);
-		size_t len = get_value_len(in);
-		if (load(in, len, v, options) != in + len)
+		const size_t len = get_value_len(in);
+		const std::string_view item(in, len);
+		if (load(item, v, options) != sv_end(item))
 			return in - 1;
 		in += len;
 		it = v;
@@ -262,8 +269,8 @@ const char* load_container(const char* in, size_t len, containter_type& t, int o
 	return in; // success
 }
 template <typename T, typename A>
-const char* load(const char* in, size_t len, std::vector<T, A>& t, int options) {
-	return load_container(in, len, t, options);
+const char* load(std::string_view sv, std::vector<T, A>& t, int options) {
+	return load_container(sv, t, options);
 }
 struct LoadObject {
 	LoadObject(const prop_map& _props, size_t _props_size, const char* _start, int _options)
@@ -276,42 +283,58 @@ struct LoadObject {
 	const char* error_pos;
 	const char* start;
 	const char* _prev_name;
+	// Load the parsed property `props[idx]` into `value`; set error_pos on a malformed value.
+	template <typename V> bool load_prop(size_t idx, V& value) {
+		const std::string_view val = props[idx].value;
+		const char* end = load(val, value, options);
+		if (end == sv_end(val))
+			return true;
+		error_pos = end;
+		current = props_size; // stop parsing on a malformed value
+		return false;
+	}
+	template <typename V> bool handle_absent(V& value) {
+		if (options & RESET_IF_ABSENT)
+			value = V();
+		if (options & ERROR_IF_ABSENT) {
+			error_pos = start; // required property missing
+			current = props_size;
+			return false;
+		}
+		return true;
+	}
 	template <typename V> bool process(const char* name, V& value) {
+		if (options & PARSE_ANY) {
+			const property* const end = props + props_size;
+			const property* it = std::lower_bound(
+				props, end, name,
+				[](const property& p, const char* n) { return p.param < n; });
+			if (it != end && it->param == name)
+				return load_prop(static_cast<size_t>(it - props), value);
+			return handle_absent(value);
+		}
 #ifndef NDEBUG
-		// this check could fail if name is dynamically allocated and was freed after usage
-		// if Sublime Text 3 is used, select everything inside serialize() and press F9
+		// fast path requires ascending field order (select everything inside serialize() + F9 in
+		// Sublime Text 3 to sort)
 		if (strcmp(_prev_name, name) >= 0)
-			assert(false && "variables should be serialized in alphabetical order");
+			assert(false && "variables should be serialized in alphabetical order (or use PARSE_ANY)");
 		_prev_name = name;
 #endif
-		if (current < props_size &&
-			strncmp(name, props[current].param.str, props[current].param.len) == 0) {
-
-			const char* end = load(props[current].value.str, props[current].value.len, value, options);
-			if (end == props[current].value.str + props[current].value.len) {
-				++current;
-				return true;
-			}
-			error_pos = end;
-		}
-		else if (!(options & ERROR_IF_ABSENT)) {
-			if (options & RESET_IF_ABSENT)
-				value = V();
-			return true;
-		}
-		current = props_size; // skip parsing
-		return false;
+		if (current < props_size && props[current].param == name)
+			return load_prop(current++, value);
+		return handle_absent(value);
 	}
 	template <typename V> bool process_skip_empty(const char* name, V& value) {
 		return process(name, value);
 	}
 };
 
-template <typename V> const char* load(const char* in, size_t len, V& t, int options) {
-	const char* start = in;
+template <typename V> const char* load(std::string_view sv, V& t, int options) {
+	const char* start = sv.data();
+	const size_t len = sv.size();
 	prop_map props;
 	size_t props_size = 0;
-	in = skip_ws(in);
+	const char* in = skip_ws(start);
 
 	if (*in != '{')
 		return in - 1;										 // error
@@ -325,35 +348,47 @@ template <typename V> const char* load(const char* in, size_t len, V& t, int opt
 	if (!serialize(serializer, t))
 		return serializer.error_pos;
 
-	if (serializer.current < serializer.props_size)
-		return props[serializer.current].param.str;
+	if (serializer.error_pos) // a property value was malformed
+		return serializer.error_pos;
+
+	// Fast (sorted) mode requires every property to be consumed; PARSE_ANY tolerates extras.
+	if (!(options & PARSE_ANY) && serializer.current < serializer.props_size)
+		return props[serializer.current].param.data();
 
 	in = skip_ws(in + 1); // skip whitespace after
 	return in;
 }
 template <typename T>
 int load_object_from_string(const char* json_string, T& t, size_t len = (size_t)-1,
-							int options = RESET_IF_ABSENT) {
+							int options = DEFAULT_OPTIONS) {
 	if (len == (size_t)-1)
 		len = strlen(json_string);
-	const char* pos = load(json_string, len + 1, t, options);
-	if (pos != json_string + len) {
-		return get_error_line(json_string, pos); // return error position
-	}
-	return JSON_OK;
-}
-template <typename T, typename A>
-int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_t len = (size_t)-1,	int options = RESET_IF_ABSENT) {
-	if (len == (size_t)-1)
-		len = strlen(json_string);
-	const char* pos = load_container(json_string, len + 1, t, options);
+	const char* pos = load(std::string_view(json_string, len + 1), t, options);
 	if (pos != json_string + len) {
 		return get_error_line(json_string, pos); // return error position
 	}
 	return JSON_OK;
 }
 template <typename T>
-int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABSENT) {
+int load_object_from_string(std::string_view json_string, T& t, int options = DEFAULT_OPTIONS) {
+	const char* pos = load(json_string, t, options);
+	if (pos != sv_end(json_string)) {
+		return get_error_line(json_string.data(), pos);
+	}
+	return JSON_OK;
+}
+template <typename T, typename A>
+int load_object_from_string(const char* json_string, std::vector<T, A>& t, size_t len = (size_t)-1,	int options = DEFAULT_OPTIONS) {
+	if (len == (size_t)-1)
+		len = strlen(json_string);
+	const char* pos = load_container(std::string_view(json_string, len + 1), t, options);
+	if (pos != json_string + len) {
+		return get_error_line(json_string, pos); // return error position
+	}
+	return JSON_OK;
+}
+template <typename T>
+int load_object_from_file(const char* filename, T& t, int options = DEFAULT_OPTIONS) {
     std::ifstream is(filename, std::ios::binary);
     if (!is)
         return JSON_FILESYSTEM_ERROR;
@@ -365,7 +400,6 @@ int load_object_from_file(const char* filename, T& t, int options = RESET_IF_ABS
     is.read(buffer, length);
     buffer[length] = 0;
     is.close();
-    //const char* pos = load(buffer, length + 1, t, options);
     int ret = load_object_from_string(buffer, t, length, options);
     delete[] buffer;
     return ret;
@@ -393,6 +427,10 @@ inline void save(std::ostream& out, char& t, int tabs) {
 	out << t;
 }
 inline void save(std::ostream& out, const char* t, int tabs) {
+	GLW_UNUSED(tabs);
+	out << quote << t << quote;
+}
+inline void save(std::ostream& out, std::string_view t, int tabs) {
 	GLW_UNUSED(tabs);
 	out << quote << t << quote;
 }
