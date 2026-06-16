@@ -946,3 +946,54 @@ TEST(Readme, SubsetOfLargerJson) {
 	EXPECT_FLOAT_EQ(1.5f, pt.x);
 	EXPECT_FLOAT_EQ(-2.0f, pt.y);
 }
+
+// ******* nested containers must not accumulate across sibling array elements (regression) *******
+// load_container reused one element value and appended into the destination, so a struct's own
+// vectors — and nested vectors-of-structs — leaked from one sibling into the next (later siblings
+// grew to contain the earlier siblings' contents). This corrupted, e.g., octree manifests.
+struct na_inner {
+	std::vector<int> vals;
+};
+template <typename T> bool serialize(T& t, na_inner& v) {
+	return SERIALIZE(vals);
+}
+struct na_outer {
+	std::vector<na_inner> items;
+};
+template <typename T> bool serialize(T& t, na_outer& v) {
+	return SERIALIZE(items);
+}
+struct na_doc {
+	std::vector<na_outer> groups;
+};
+template <typename T> bool serialize(T& t, na_doc& v) {
+	return SERIALIZE(groups);
+}
+
+TEST(NestedArray, SiblingsDoNotAccumulate) {
+	const char* json_str = "{\"groups\":["
+						   "{\"items\":[{\"vals\":[1]},{\"vals\":[2]}]},"
+						   "{\"items\":[{\"vals\":[3]}]}"
+						   "]}";
+	na_doc d;
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, d));
+
+	ASSERT_EQ(2u, d.groups.size());
+	// Second group must hold only its own item — not the first group's items appended on top.
+	ASSERT_EQ(2u, d.groups[0].items.size());
+	ASSERT_EQ(1u, d.groups[1].items.size());
+
+	// Each leaf vector keeps exactly its own value (no accumulation across reused element).
+	EXPECT_EQ(std::vector<int>({1}), d.groups[0].items[0].vals);
+	EXPECT_EQ(std::vector<int>({2}), d.groups[0].items[1].vals);
+	EXPECT_EQ(std::vector<int>({3}), d.groups[1].items[0].vals);
+}
+
+// The destination must be replaced, not appended to, when it already holds data.
+TEST(NestedArray, LoadReplacesExistingVector) {
+	array_int_var v;
+	v.val = {7, 8, 9}; // pre-populate
+	const char* json_str = "{\n	\"val\": [1, 2, 3]\n}\n";
+	EXPECT_EQ(JSON_OK, load_object_from_string(json_str, v));
+	EXPECT_TRUE(v.val == std::vector<int>({1, 2, 3}));
+}

@@ -245,9 +245,13 @@ const char* load_container(std::string_view sv, containter_type& t, int options)
 	if (*in != '[')
 		return in - 1;
 
+	// Replace, don't append: `t` may carry stale content when the parent `value_type` is reused
+	// across sibling elements (below), and nested containers would otherwise accumulate across siblings.
+	t = containter_type();
 	std::insert_iterator<containter_type> it(t, t.end());
-	typename containter_type::value_type v;
 	do {
+		// Fresh per element so a struct value_type's own nested containers don't accumulate across items.
+		typename containter_type::value_type v = typename containter_type::value_type();
 		in = skip_ws(in + 1);
 		const size_t len = get_value_len(in);
 		const std::string_view item(in, len);
